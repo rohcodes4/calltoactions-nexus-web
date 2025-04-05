@@ -18,6 +18,7 @@ import NotFound from "@/pages/NotFound";
 import Admin from "@/pages/Admin";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 

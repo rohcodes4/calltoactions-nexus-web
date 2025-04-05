@@ -34,12 +34,26 @@ const ContactForm = ({ className = '', variant = 'default' }: ContactFormProps) 
     try {
       // This is a placeholder for the actual form submission logic
       // In a real implementation, you would send this data to a backend API
-      // For now, we'll simulate a successful submission
       
       console.log('Form submitted to rohitparakh4@gmail.com:', formData);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Store submission in localStorage for demo purposes
+      // In a real app, this would be stored in a database
+      const existingSubmissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+      const newSubmission = {
+        id: `submission-${Date.now()}`,
+        ...formData,
+        date: new Date().toISOString(),
+        read: false
+      };
+      
+      localStorage.setItem('contactSubmissions', JSON.stringify([
+        newSubmission,
+        ...existingSubmissions
+      ]));
       
       toast({
         title: "Message sent!",

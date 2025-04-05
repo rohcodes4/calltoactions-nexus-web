@@ -1,12 +1,20 @@
 
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface PageTransitionProps {
   children: ReactNode;
 }
 
 const PageTransition = ({ children }: PageTransitionProps) => {
+  const { pathname } = useLocation();
+
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

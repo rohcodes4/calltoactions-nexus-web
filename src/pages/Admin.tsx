@@ -4,11 +4,13 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Settings, Users, FolderKanban, PanelLeft, LogOut } from 'lucide-react';
+import { Settings, Users, FolderKanban, PanelLeft, LogOut, Mail, Lock } from 'lucide-react';
 import ServicesAdmin from '@/components/admin/ServicesAdmin';
 import PortfolioAdmin from '@/components/admin/PortfolioAdmin';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminUsers from '@/components/admin/AdminUsers';
+import ContactSubmissions from '@/components/admin/ContactSubmissions';
+import ChangePassword from '@/components/admin/ChangePassword';
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -131,6 +133,18 @@ const Admin = () => {
                 </Link>
                 
                 <Link 
+                  to="/admin/messages" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/messages') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Mail size={18} className="mr-3" />
+                  <span>Contact Messages</span>
+                </Link>
+                
+                <Link 
                   to="/admin/users" 
                   className={`flex items-center p-3 rounded-lg transition-colors ${
                     location.pathname.includes('/admin/users') 
@@ -140,6 +154,18 @@ const Admin = () => {
                 >
                   <Users size={18} className="mr-3" />
                   <span>Users</span>
+                </Link>
+                
+                <Link 
+                  to="/admin/password" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/password') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Lock size={18} className="mr-3" />
+                  <span>Change Password</span>
                 </Link>
                 
                 <Link 
@@ -171,7 +197,9 @@ const Admin = () => {
               <Route path="/" element={<Navigate to="/admin/services" replace />} />
               <Route path="/services/*" element={<ServicesAdmin />} />
               <Route path="/portfolio/*" element={<PortfolioAdmin />} />
+              <Route path="/messages" element={<ContactSubmissions />} />
               <Route path="/users" element={<AdminUsers />} />
+              <Route path="/password" element={<ChangePassword />} />
               <Route path="/settings" element={<AdminSettings />} />
             </Routes>
           </div>
