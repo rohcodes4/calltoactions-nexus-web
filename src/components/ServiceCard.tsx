@@ -14,14 +14,14 @@ interface ServiceCardProps {
 
 const ServiceCard = ({ title, description, icon, link, className = "" }: ServiceCardProps) => {
   return (
-    <Card className={`glass-card overflow-hidden group transition-all duration-300 hover:shadow-purple-500/20 hover:border-agency-purple/30 ${className}`}>
-      <div className="p-6">
+    <Card className={`glass-card overflow-hidden group transition-all duration-300 hover:shadow-purple-500/20 hover:border-agency-purple/30 h-full flex flex-col ${className}`}>
+      <div className="p-6 flex flex-col flex-grow">
         <div className="w-12 h-12 mb-4 bg-agency-purple/10 rounded-lg flex items-center justify-center text-agency-purple animate-pulse-glow">
           {icon}
         </div>
         <h3 className="text-xl font-bold mb-2 text-white">{title}</h3>
-        <p className="text-gray-400 mb-4">{description}</p>
-        <Link to={link}>
+        <p className="text-gray-400 mb-4 flex-grow">{description}</p>
+        <Link to={link} className="mt-auto">
           <Button variant="ghost" className="group p-0 text-agency-purple hover:text-agency-blue hover:bg-transparent">
             <span className="mr-2">Learn More</span>
             <ArrowRight size={16} className="transition-transform transform group-hover:translate-x-1" />

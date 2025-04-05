@@ -1,185 +1,154 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Trash2, Mail, Check, X } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-
-interface ContactSubmission {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import { Mail, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { fetchContactMessages, markMessageAsRead } from '@/services/databaseService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { ContactMessage } from '@/lib/supabase';
 
 const ContactSubmissions = () => {
-  const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const queryClient = useQueryClient();
 
-  // In a real app, this would come from a database
-  useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      const mockSubmissions = [
-        {
-          id: "1",
-          name: "John Smith",
-          email: "john@example.com",
-          subject: "Website Redesign Project",
-          message: "I'm interested in discussing a complete website redesign for my company. Can you provide more information about your services and pricing?",
-          date: "2023-05-10T14:30:00Z",
-          read: true,
-        },
-        {
-          id: "2",
-          name: "Sarah Johnson",
-          email: "sarah@example.com",
-          subject: "Logo Design Inquiry",
-          message: "We're a startup looking for a new logo design. I would like to schedule a consultation to discuss our vision and budget.",
-          date: "2023-05-12T09:15:00Z",
-          read: false,
-        },
-        {
-          id: "3",
-          name: "Michael Chen",
-          email: "michael@example.com",
-          subject: "Video Production Services",
-          message: "I need a promotional video for our new product launch in the next two months. Can you share some examples of your previous work in this area?",
-          date: "2023-05-13T16:45:00Z",
-          read: false,
-        }
-      ];
-      
-      setSubmissions(mockSubmissions);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  // Fetch messages from database
+  const { data: messages = [], isLoading, error } = useQuery({
+    queryKey: ['contactMessages'],
+    queryFn: fetchContactMessages
+  });
 
-  const handleMarkAsRead = (id: string) => {
-    setSubmissions(submissions.map(item => 
-      item.id === id ? { ...item, read: true } : item
-    ));
+  // Mark message as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: markMessageAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
+    }
+  });
+
+  const handleViewMessage = (message: ContactMessage) => {
+    setSelectedMessage(message);
     
-    toast({
-      title: "Marked as read",
-      description: "The submission has been marked as read.",
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this submission?")) {
-      setSubmissions(submissions.filter(item => item.id !== id));
-      
-      toast({
-        title: "Submission deleted",
-        description: "The submission has been deleted successfully.",
-      });
+    // Mark as read if it's unread
+    if (!message.isRead) {
+      markAsReadMutation.mutate(message.id);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      dateStyle: 'medium', 
-      timeStyle: 'short' 
-    }).format(date);
-  };
-
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-agency-purple"></div>
-      </div>
-    );
+    return <div className="flex justify-center py-10">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+    </div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">
+      Error loading messages. Please try again later.
+    </div>;
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Contact Submissions</h1>
-          <p className="text-gray-400">Manage messages from the contact form</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white">Contact Submissions</h1>
+        <p className="text-gray-400">View and manage messages from your website's contact form</p>
       </div>
 
-      {submissions.length === 0 ? (
-        <Card className="glass-card p-6 text-center">
-          <p className="text-gray-400">No contact form submissions yet.</p>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {submissions.map(submission => (
-            <Card 
-              key={submission.id} 
-              className={`glass-card p-6 overflow-hidden relative ${
-                !submission.read ? 'border-agency-purple/30' : ''
-              }`}
-            >
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-start gap-2">
-                    <h3 className="text-xl font-bold text-white">{submission.subject}</h3>
-                    {!submission.read && (
-                      <Badge variant="outline" className="bg-agency-purple/20 text-agency-purple border-agency-purple/30">
-                        New
-                      </Badge>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Messages list */}
+        <div className="lg:col-span-1 glass-card p-4 rounded-lg max-h-[70vh] overflow-y-auto">
+          <h2 className="text-xl font-semibold text-white mb-4">Messages ({messages.length})</h2>
+          
+          {messages.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">No messages yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {messages.map(message => (
+                <div 
+                  key={message.id}
+                  className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedMessage?.id === message.id 
+                      ? 'bg-agency-purple/20' 
+                      : message.isRead 
+                        ? 'hover:bg-white/5' 
+                        : 'bg-agency-purple/10 hover:bg-agency-purple/15'
+                  }`}
+                  onClick={() => handleViewMessage(message)}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-medium text-white">{message.name}</span>
+                    {!message.isRead && (
+                      <span className="bg-agency-purple text-white text-xs px-2 py-0.5 rounded-full">New</span>
                     )}
                   </div>
-                  
-                  <div className="flex items-center text-gray-400 text-sm mt-1 mb-3">
-                    <span className="mr-2">{submission.name}</span>
-                    <span className="mr-2">•</span>
-                    <a href={`mailto:${submission.email}`} className="text-agency-purple hover:underline">
-                      {submission.email}
-                    </a>
-                    <span className="mx-2">•</span>
-                    <span>{formatDate(submission.date)}</span>
+                  <div className="text-sm text-gray-400 mb-1">{message.email}</div>
+                  <div className="text-xs text-gray-500 flex items-center">
+                    <Calendar size={12} className="mr-1" />
+                    {format(new Date(message.created_at), 'MMM d, yyyy')}
                   </div>
-                  
-                  <p className="text-gray-300 mb-4 whitespace-pre-line">{submission.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Message detail */}
+        <div className="lg:col-span-2">
+          {selectedMessage ? (
+            <Card className="glass-card p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white">{selectedMessage.name}</h3>
+                  <div className="flex items-center text-gray-400">
+                    <Mail size={14} className="mr-2" />
+                    <a href={`mailto:${selectedMessage.email}`} className="hover:text-agency-purple transition-colors">
+                      {selectedMessage.email}
+                    </a>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Received on {format(new Date(selectedMessage.created_at), 'MMMM d, yyyy, h:mm a')}
+                  </div>
                 </div>
                 
-                <div className="flex md:flex-col gap-2">
-                  {!submission.read && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-green-500/30 text-green-500 hover:bg-green-500/10"
-                      onClick={() => handleMarkAsRead(submission.id)}
-                    >
-                      <Check size={16} className="mr-1" />
-                      Mark Read
-                    </Button>
+                <div className="flex items-center">
+                  {selectedMessage.isRead ? (
+                    <span className="flex items-center text-gray-400 text-sm">
+                      <CheckCircle size={14} className="mr-1" />
+                      Read
+                    </span>
+                  ) : (
+                    <span className="flex items-center text-agency-purple text-sm">
+                      <XCircle size={14} className="mr-1" />
+                      Unread
+                    </span>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="border-agency-purple/30 text-agency-purple hover:bg-agency-purple/10"
-                    onClick={() => window.open(`mailto:${submission.email}?subject=Re: ${submission.subject}`, '_blank')}
-                  >
-                    <Mail size={16} className="mr-1" />
-                    Reply
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-500 hover:text-red-400 border-red-500/30 hover:bg-red-500/10"
-                    onClick={() => handleDelete(submission.id)}
-                  >
-                    <Trash2 size={16} className="mr-1" />
-                    Delete
-                  </Button>
                 </div>
               </div>
+              
+              <div className="bg-white/5 p-4 rounded-lg">
+                <p className="text-gray-300 whitespace-pre-line">{selectedMessage.message}</p>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = `mailto:${selectedMessage.email}?subject=Re: Your Message to CallToActions`}
+                >
+                  Reply via Email
+                </Button>
+              </div>
             </Card>
-          ))}
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center p-10 bg-white/5 rounded-lg">
+              <Mail size={48} className="text-gray-500 mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Message Selected</h3>
+              <p className="text-gray-400">
+                Select a message from the list to view its contents.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
