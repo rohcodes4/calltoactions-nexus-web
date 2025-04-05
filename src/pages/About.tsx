@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle, Award } from 'lucide-react';
@@ -13,9 +12,9 @@ const teamMembers = [
     bio: "With over 15 years in the creative industry, Alex leads our team with vision and innovation.",
     imageUrl: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=800&auto=format&fit=crop",
     socialLinks: [
-      { platform: "linkedin", url: "#" },
-      { platform: "twitter", url: "#" },
-      { platform: "email", url: "mailto:alex@calltoactions.com" },
+      { platform: "linkedin" as const, url: "#" },
+      { platform: "twitter" as const, url: "#" },
+      { platform: "email" as const, url: "mailto:alex@calltoactions.com" },
     ]
   },
   {
@@ -24,9 +23,9 @@ const teamMembers = [
     bio: "Sarah brings technical expertise and problem-solving skills to create robust, scalable web solutions.",
     imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop",
     socialLinks: [
-      { platform: "linkedin", url: "#" },
-      { platform: "twitter", url: "#" },
-      { platform: "email", url: "mailto:sarah@calltoactions.com" },
+      { platform: "linkedin" as const, url: "#" },
+      { platform: "twitter" as const, url: "#" },
+      { platform: "email" as const, url: "mailto:sarah@calltoactions.com" },
     ]
   },
   {
@@ -35,9 +34,9 @@ const teamMembers = [
     bio: "Michael's eye for design and attention to detail ensures our visual assets are both beautiful and effective.",
     imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop",
     socialLinks: [
-      { platform: "linkedin", url: "#" },
-      { platform: "twitter", url: "#" },
-      { platform: "email", url: "mailto:michael@calltoactions.com" },
+      { platform: "linkedin" as const, url: "#" },
+      { platform: "twitter" as const, url: "#" },
+      { platform: "email" as const, url: "mailto:michael@calltoactions.com" },
     ]
   },
   {
@@ -46,9 +45,9 @@ const teamMembers = [
     bio: "Olivia develops data-driven marketing strategies that help our clients reach their target audience effectively.",
     imageUrl: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?q=80&w=800&auto=format&fit=crop",
     socialLinks: [
-      { platform: "linkedin", url: "#" },
-      { platform: "twitter", url: "#" },
-      { platform: "email", url: "mailto:olivia@calltoactions.com" },
+      { platform: "linkedin" as const, url: "#" },
+      { platform: "twitter" as const, url: "#" },
+      { platform: "email" as const, url: "mailto:olivia@calltoactions.com" },
     ]
   },
 ];

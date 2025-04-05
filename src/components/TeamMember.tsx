@@ -1,9 +1,10 @@
 
 import { Card } from "@/components/ui/card";
-import { LinkedIn, Twitter, Mail } from "lucide-react";
+import { Linkedin, Twitter, Mail } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
 
 interface SocialLink {
-  platform: "linkedin" | "twitter" | "email";
+  platform: "linkedin" | "twitter" | "email" | "facebook" | "instagram";
   url: string;
 }
 
@@ -16,9 +17,11 @@ interface TeamMemberProps {
 }
 
 const SocialIcons = {
-  linkedin: LinkedIn,
+  linkedin: Linkedin,
   twitter: Twitter,
   email: Mail,
+  facebook: Facebook,
+  instagram: Instagram,
 };
 
 const TeamMember = ({ name, role, bio, imageUrl, socialLinks }: TeamMemberProps) => {
