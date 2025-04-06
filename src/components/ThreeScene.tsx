@@ -1,14 +1,13 @@
 
 import { useRef, useState, useEffect } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { 
   OrbitControls, 
   Sphere, 
   MeshDistortMaterial, 
   Float, 
   Environment,
-  Text3D,
-  useTexture
+  Text3D
 } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -75,7 +74,6 @@ const InteractiveSphere = ({ position = [0, 0, 0], color = "#4CC9F0" }) => {
         onClick={() => setClicked(!clicked)}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
-        scale={clicked ? 1.2 : 1}
       >
         <MeshDistortMaterial
           color={hovered ? "#7928CA" : color}
