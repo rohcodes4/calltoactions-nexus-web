@@ -1,13 +1,15 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Save, Globe, Mail, MapPin, Phone, Edit } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase, GeneralSettings, SocialLinks } from '@/lib/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const AdminSettings = () => {
-  const [generalSettings, setGeneralSettings] = useState({
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+    id: '',
     siteTitle: "CallToActions",
     siteTagline: "We Create Digital Experiences That Convert",
     adminEmail: "rohitparakh4@gmail.com",
@@ -15,7 +17,8 @@ const AdminSettings = () => {
     address: "123 Creative St, Digital City, 90210"
   });
   
-  const [socialLinks, setSocialLinks] = useState({
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({
+    id: '',
     facebook: "https://facebook.com",
     twitter: "https://twitter.com",
     instagram: "https://instagram.com",
@@ -26,24 +29,173 @@ const AdminSettings = () => {
   const [isEditingGeneral, setIsEditingGeneral] = useState(false);
   const [isEditingSocial, setIsEditingSocial] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: settingsData, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['generalSettings'],
+    queryFn: async () => {
+      console.log('Fetching general settings...');
+      const { data, error } = await supabase
+        .from('general_settings')
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching general settings:', error);
+        throw error;
+      }
+      
+      console.log('General settings fetched:', data);
+      return data as GeneralSettings;
+    }
+  });
+
+  const { data: socialData, isLoading: isLoadingSocial } = useQuery({
+    queryKey: ['socialLinks'],
+    queryFn: async () => {
+      console.log('Fetching social links...');
+      const { data, error } = await supabase
+        .from('social_links')
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching social links:', error);
+        throw error;
+      }
+      
+      console.log('Social links fetched:', data);
+      return data as SocialLinks;
+    }
+  });
+
+  useEffect(() => {
+    if (settingsData) {
+      setGeneralSettings(settingsData);
+    }
+  }, [settingsData]);
+
+  useEffect(() => {
+    if (socialData) {
+      setSocialLinks(socialData);
+    }
+  }, [socialData]);
+
+  const saveGeneralMutation = useMutation({
+    mutationFn: async (settings: GeneralSettings) => {
+      console.log('Saving general settings:', settings);
+      const { data, error } = await supabase
+        .from('general_settings')
+        .update({
+          siteTitle: settings.siteTitle,
+          siteTagline: settings.siteTagline,
+          adminEmail: settings.adminEmail,
+          phoneNumber: settings.phoneNumber,
+          address: settings.address,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', settings.id)
+        .select();
+      
+      if (error) {
+        console.error('Error saving general settings:', error);
+        throw error;
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['generalSettings'] });
+      toast({
+        title: "Settings Saved",
+        description: "General settings have been updated successfully."
+      });
+      setIsEditingGeneral(false);
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const saveSocialMutation = useMutation({
+    mutationFn: async (links: SocialLinks) => {
+      console.log('Saving social links:', links);
+      const { data, error } = await supabase
+        .from('social_links')
+        .update({
+          facebook: links.facebook,
+          twitter: links.twitter,
+          instagram: links.instagram,
+          linkedin: links.linkedin,
+          youtube: links.youtube,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', links.id)
+        .select();
+      
+      if (error) {
+        console.error('Error saving social links:', error);
+        throw error;
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['socialLinks'] });
+      toast({
+        title: "Settings Saved",
+        description: "Social media links have been updated successfully."
+      });
+      setIsEditingSocial(false);
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save social links. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleSaveGeneral = () => {
-    // Validation would go here
-    setIsEditingGeneral(false);
-    toast({
-      title: "Settings Saved",
-      description: "General settings have been updated successfully."
-    });
+    if (!generalSettings.id) {
+      console.error('Cannot save settings: No ID found');
+      toast({
+        title: "Error",
+        description: "Settings not properly loaded. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    saveGeneralMutation.mutate(generalSettings);
   };
 
   const handleSaveSocial = () => {
-    // Validation would go here
-    setIsEditingSocial(false);
-    toast({
-      title: "Settings Saved",
-      description: "Social media links have been updated successfully."
-    });
+    if (!socialLinks.id) {
+      console.error('Cannot save social links: No ID found');
+      toast({
+        title: "Error",
+        description: "Social links not properly loaded. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    saveSocialMutation.mutate(socialLinks);
   };
+
+  if (isLoadingSettings || isLoadingSocial) {
+    return <div className="flex justify-center py-10">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+    </div>;
+  }
 
   return (
     <div>
@@ -164,8 +316,13 @@ const AdminSettings = () => {
                   <Button 
                     onClick={handleSaveGeneral}
                     className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                    disabled={saveGeneralMutation.isPending}
                   >
-                    <Save size={16} className="mr-2" />
+                    {saveGeneralMutation.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Save size={16} className="mr-2" />
+                    )}
                     Save Changes
                   </Button>
                 </div>
@@ -235,8 +392,13 @@ const AdminSettings = () => {
                   <Button 
                     onClick={handleSaveSocial}
                     className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                    disabled={saveSocialMutation.isPending}
                   >
-                    <Save size={16} className="mr-2" />
+                    {saveSocialMutation.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Save size={16} className="mr-2" />
+                    )}
                     Save Changes
                   </Button>
                 </div>

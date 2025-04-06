@@ -9,10 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Enable debug logging in development
 if (import.meta.env.DEV) {
-  supabase.handleErrorsWithFallback = (error, fallback) => {
-    console.error('Supabase error:', error);
-    return fallback;
-  };
+  console.log('Supabase client initialized in development mode');
 }
 
 // Database types
@@ -53,4 +50,25 @@ export type ContactMessage = {
   message: string;
   created_at: string;
   isRead: boolean; // This must match the column name in Supabase
+};
+
+// New types for settings
+export type GeneralSettings = {
+  id: string;
+  siteTitle: string;
+  siteTagline: string;
+  adminEmail: string;
+  phoneNumber: string;
+  address: string;
+  updated_at?: string;
+};
+
+export type SocialLinks = {
+  id: string;
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  linkedin: string;
+  youtube: string;
+  updated_at?: string;
 };
