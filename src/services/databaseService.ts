@@ -23,6 +23,7 @@ export const fetchServices = async (): Promise<Service[]> => {
 };
 
 export const createService = async (service: Omit<Service, 'id'>): Promise<Service | null> => {
+  // Modified: Now expecting service without an ID
   const { data, error } = await supabase
     .from('services')
     .insert([{ ...service }])
@@ -118,6 +119,7 @@ export const fetchPortfolio = async (): Promise<Portfolio[]> => {
 };
 
 export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>): Promise<Portfolio | null> => {
+  // Modified: Now expecting item without an ID
   const { data, error } = await supabase
     .from('portfolio')
     .insert([{ ...item }])
