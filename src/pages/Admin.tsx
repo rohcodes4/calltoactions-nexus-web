@@ -2,32 +2,56 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Settings, Users, FolderKanban, PanelLeft, LogOut, Mail, Lock } from 'lucide-react';
+import { 
+  Settings, 
+  Users, 
+  FolderKanban, 
+  PanelLeft, 
+  LogOut, 
+  Mail, 
+  Lock,
+  Briefcase,
+  FileText,
+  CreditCard,
+  UserPlus
+} from 'lucide-react';
 import ServicesAdmin from '@/components/admin/ServicesAdmin';
 import PortfolioAdmin from '@/components/admin/PortfolioAdmin';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminUsers from '@/components/admin/AdminUsers';
 import ContactSubmissions from '@/components/admin/ContactSubmissions';
 import ChangePassword from '@/components/admin/ChangePassword';
+import ClientManager from '@/components/admin/crm/ClientManager';
+import ProjectManager from '@/components/admin/crm/ProjectManager';
+import ProposalManager from '@/components/admin/crm/ProposalManager';
+import { supabase } from '@/lib/supabase';
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
 
-  // Mock authentication check - in a real app, we would check against a backend
+  // Check authentication status
   useEffect(() => {
-    // Simulate auth check
-    const checkAuth = () => {
-      // In a real app, this would be a check against session storage or a token
-      const mockUserEmail = localStorage.getItem('adminEmail');
-      setIsAuthenticated(mockUserEmail === 'rohitparakh4@gmail.com');
+    const checkAuth = async () => {
+      // Get current session from Supabase
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
       setIsLoading(false);
     };
     
     checkAuth();
+
+    // Set up listener for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // For demo purposes - fake login
@@ -36,7 +60,8 @@ const Admin = () => {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('adminEmail');
     setIsAuthenticated(false);
   };
@@ -107,7 +132,9 @@ const Admin = () => {
                 <p className="text-sm text-gray-400">Manage your website content</p>
               </div>
               
-              <nav className="space-y-2">
+              <nav className="space-y-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wider pl-3 pb-1 pt-2">Content</p>
+                
                 <Link 
                   to="/admin/services" 
                   className={`flex items-center p-3 rounded-lg transition-colors ${
@@ -141,8 +168,48 @@ const Admin = () => {
                   }`}
                 >
                   <Mail size={18} className="mr-3" />
-                  <span>Contact Messages</span>
+                  <span>Messages</span>
                 </Link>
+                
+                <p className="text-xs text-gray-500 uppercase tracking-wider pl-3 pb-1 pt-4">CRM</p>
+                
+                <Link 
+                  to="/admin/clients" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/clients') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <UserPlus size={18} className="mr-3" />
+                  <span>Clients</span>
+                </Link>
+                
+                <Link 
+                  to="/admin/projects" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/projects') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Briefcase size={18} className="mr-3" />
+                  <span>Projects</span>
+                </Link>
+                
+                <Link 
+                  to="/admin/proposals" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/proposals') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <FileText size={18} className="mr-3" />
+                  <span>Proposals</span>
+                </Link>
+                
+                <p className="text-xs text-gray-500 uppercase tracking-wider pl-3 pb-1 pt-4">Admin</p>
                 
                 <Link 
                   to="/admin/users" 
@@ -182,7 +249,7 @@ const Admin = () => {
                 
                 <button 
                   onClick={handleLogout}
-                  className="flex items-center p-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white w-full text-left"
+                  className="flex items-center p-3 rounded-lg transition-colors text-gray-400 hover:bg-white/5 hover:text-white w-full text-left mt-4"
                 >
                   <LogOut size={18} className="mr-3" />
                   <span>Logout</span>
@@ -201,6 +268,9 @@ const Admin = () => {
               <Route path="/users" element={<AdminUsers />} />
               <Route path="/password" element={<ChangePassword />} />
               <Route path="/settings" element={<AdminSettings />} />
+              <Route path="/clients" element={<ClientManager />} />
+              <Route path="/projects" element={<ProjectManager />} />
+              <Route path="/proposals" element={<ProposalManager />} />
             </Routes>
           </div>
         </div>

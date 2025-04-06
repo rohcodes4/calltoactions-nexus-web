@@ -1,11 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Save, Globe, Mail, MapPin, Phone, Edit } from 'lucide-react';
+import { Save, Globe, Mail, MapPin, Phone, Edit, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase, GeneralSettings, SocialLinks } from '@/lib/supabase';
+import { GeneralSettings, SocialLinks } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchGeneralSettings, fetchSocialLinks, updateGeneralSettings, updateSocialLinks } from '@/services/databaseService';
 
 const AdminSettings = () => {
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
@@ -31,44 +33,29 @@ const AdminSettings = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: settingsData, isLoading: isLoadingSettings } = useQuery({
+  // Fetch general settings
+  const { 
+    data: settingsData, 
+    isLoading: isLoadingSettings,
+    error: settingsError,
+    refetch: refetchSettings 
+  } = useQuery({
     queryKey: ['generalSettings'],
-    queryFn: async () => {
-      console.log('Fetching general settings...');
-      const { data, error } = await supabase
-        .from('general_settings')
-        .select('*')
-        .single();
-      
-      if (error) {
-        console.error('Error fetching general settings:', error);
-        throw error;
-      }
-      
-      console.log('General settings fetched:', data);
-      return data as GeneralSettings;
-    }
+    queryFn: fetchGeneralSettings
   });
 
-  const { data: socialData, isLoading: isLoadingSocial } = useQuery({
+  // Fetch social links
+  const { 
+    data: socialData, 
+    isLoading: isLoadingSocial,
+    error: socialError,
+    refetch: refetchSocial 
+  } = useQuery({
     queryKey: ['socialLinks'],
-    queryFn: async () => {
-      console.log('Fetching social links...');
-      const { data, error } = await supabase
-        .from('social_links')
-        .select('*')
-        .single();
-      
-      if (error) {
-        console.error('Error fetching social links:', error);
-        throw error;
-      }
-      
-      console.log('Social links fetched:', data);
-      return data as SocialLinks;
-    }
+    queryFn: fetchSocialLinks
   });
 
+  // Update settings when data is loaded
   useEffect(() => {
     if (settingsData) {
       setGeneralSettings(settingsData);
@@ -81,28 +68,16 @@ const AdminSettings = () => {
     }
   }, [socialData]);
 
+  // Save general settings mutation
   const saveGeneralMutation = useMutation({
-    mutationFn: async (settings: GeneralSettings) => {
-      console.log('Saving general settings:', settings);
-      const { data, error } = await supabase
-        .from('general_settings')
-        .update({
-          siteTitle: settings.siteTitle,
-          siteTagline: settings.siteTagline,
-          adminEmail: settings.adminEmail,
-          phoneNumber: settings.phoneNumber,
-          address: settings.address,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', settings.id)
-        .select();
-      
-      if (error) {
-        console.error('Error saving general settings:', error);
-        throw error;
-      }
-      
-      return data;
+    mutationFn: (settings: GeneralSettings) => {
+      return updateGeneralSettings(settings.id, {
+        siteTitle: settings.siteTitle,
+        siteTagline: settings.siteTagline,
+        adminEmail: settings.adminEmail,
+        phoneNumber: settings.phoneNumber,
+        address: settings.address
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['generalSettings'] });
@@ -113,37 +88,24 @@ const AdminSettings = () => {
       setIsEditingGeneral(false);
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to save settings. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save settings",
         variant: "destructive"
       });
     }
   });
 
+  // Save social links mutation
   const saveSocialMutation = useMutation({
-    mutationFn: async (links: SocialLinks) => {
-      console.log('Saving social links:', links);
-      const { data, error } = await supabase
-        .from('social_links')
-        .update({
-          facebook: links.facebook,
-          twitter: links.twitter,
-          instagram: links.instagram,
-          linkedin: links.linkedin,
-          youtube: links.youtube,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', links.id)
-        .select();
-      
-      if (error) {
-        console.error('Error saving social links:', error);
-        throw error;
-      }
-      
-      return data;
+    mutationFn: (links: SocialLinks) => {
+      return updateSocialLinks(links.id, {
+        facebook: links.facebook,
+        twitter: links.twitter,
+        instagram: links.instagram,
+        linkedin: links.linkedin,
+        youtube: links.youtube
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['socialLinks'] });
@@ -154,10 +116,9 @@ const AdminSettings = () => {
       setIsEditingSocial(false);
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
       toast({
         title: "Error",
-        description: "Failed to save social links. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save social links",
         variant: "destructive"
       });
     }
@@ -165,7 +126,6 @@ const AdminSettings = () => {
 
   const handleSaveGeneral = () => {
     if (!generalSettings.id) {
-      console.error('Cannot save settings: No ID found');
       toast({
         title: "Error",
         description: "Settings not properly loaded. Please refresh and try again.",
@@ -179,7 +139,6 @@ const AdminSettings = () => {
 
   const handleSaveSocial = () => {
     if (!socialLinks.id) {
-      console.error('Cannot save social links: No ID found');
       toast({
         title: "Error",
         description: "Social links not properly loaded. Please refresh and try again.",
@@ -191,17 +150,59 @@ const AdminSettings = () => {
     saveSocialMutation.mutate(socialLinks);
   };
 
+  const handleRefresh = () => {
+    refetchSettings();
+    refetchSocial();
+    toast({
+      title: "Refreshing",
+      description: "Refreshing settings data from database."
+    });
+  };
+
   if (isLoadingSettings || isLoadingSocial) {
-    return <div className="flex justify-center py-10">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
-    </div>;
+    return (
+      <div className="flex justify-center py-10">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+      </div>
+    );
+  }
+
+  if (settingsError || socialError) {
+    return (
+      <div className="text-red-500 p-6 bg-white/5 rounded-lg">
+        <h3 className="text-xl font-bold mb-2">Error Loading Settings</h3>
+        <p className="mb-4">There was a problem loading your settings data from the database.</p>
+        <div className="mb-4">
+          {settingsError && (
+            <div className="text-sm bg-red-500/10 p-2 rounded">
+              General Settings Error: {settingsError instanceof Error ? settingsError.message : 'Unknown error'}
+            </div>
+          )}
+          {socialError && (
+            <div className="text-sm bg-red-500/10 p-2 rounded mt-2">
+              Social Links Error: {socialError instanceof Error ? socialError.message : 'Unknown error'}
+            </div>
+          )}
+        </div>
+        <Button onClick={handleRefresh} variant="destructive">
+          <RefreshCw size={16} className="mr-2" />
+          Try Again
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Site Settings</h1>
-        <p className="text-gray-400">Manage your website's general settings and configuration</p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Site Settings</h1>
+          <p className="text-gray-400">Manage your website's general settings and configuration</p>
+        </div>
+        <Button variant="outline" onClick={handleRefresh}>
+          <RefreshCw size={16} className="mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
@@ -362,7 +363,7 @@ const AdminSettings = () => {
                   {isEditingSocial ? (
                     <input 
                       type="text" 
-                      value={(socialLinks as any)[social.key]}
+                      value={(socialLinks as any)[social.key] || ''}
                       onChange={e => setSocialLinks({...socialLinks, [social.key]: e.target.value})}
                       className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
                       placeholder={`https://${social.key}.com/yourhandle`}

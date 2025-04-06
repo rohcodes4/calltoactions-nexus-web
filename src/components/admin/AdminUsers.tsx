@@ -1,48 +1,84 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Save, X, User, UserCheck, UserX } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, User, UserCheck, UserX, MailOpen } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { User as UserType } from '@/lib/supabase';
+import { fetchUsers, createUser, updateUser } from '@/services/databaseService';
+import { z } from 'zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
-interface UserType {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "editor" | "viewer";
-  status: "active" | "inactive";
-}
-
-// Mock data - in a real app, this would come from a database
-const initialUsers = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "rohitparakh4@gmail.com", 
-    role: "admin" as const,
-    status: "active" as const
-  },
-  {
-    id: "2",
-    name: "John Editor",
-    email: "john@example.com",
-    role: "editor" as const,
-    status: "active" as const
-  },
-  {
-    id: "3", 
-    name: "Sarah Viewer",
-    email: "sarah@example.com",
-    role: "viewer" as const,
-    status: "inactive" as const
-  }
-];
+// Validation schema
+const userSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  full_name: z.string().min(1, "Full name is required"),
+  role: z.enum(["admin", "editor", "viewer"]),
+  status: z.enum(["active", "inactive"])
+});
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState<UserType[]>(initialUsers);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch users from the database
+  const { data: users = [], isLoading, error } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers
+  });
+
+  // Create user mutation
+  const createMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "User Created",
+        description: "The user has been created successfully"
+      });
+      setEditingUser(null);
+      setIsAdding(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create user",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update user mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<UserType> }) => 
+      updateUser(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "User Updated",
+        description: "The user has been updated successfully"
+      });
+      setEditingUser(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update user",
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleEdit = (user: UserType) => {
     setEditingUser({ ...user });
@@ -50,59 +86,54 @@ const AdminUsers = () => {
   };
 
   const handleAdd = () => {
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name: "",
+    const newUser: UserType = {
+      id: "",
       email: "",
-      role: "viewer" as const,
-      status: "inactive" as const
+      full_name: "",
+      role: "viewer",
+      status: "inactive"
     };
     setEditingUser(newUser);
     setIsAdding(true);
   };
 
+  const validateForm = () => {
+    if (!editingUser) return false;
+    
+    try {
+      userSchema.parse({
+        email: editingUser.email,
+        full_name: editingUser.full_name || "",
+        role: editingUser.role,
+        status: editingUser.status
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map(e => e.message).join(', ');
+        toast({
+          title: "Validation Error",
+          description: errorMessages,
+          variant: "destructive"
+        });
+      }
+      return false;
+    }
+  };
+
   const handleSave = () => {
-    if (!editingUser) return;
+    if (!editingUser || !validateForm()) return;
     
-    // Validate
-    if (!editingUser.name.trim() || !editingUser.email.trim()) {
-      toast({
-        title: "Error",
-        description: "Name and email are required",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editingUser.email)) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (isAdding) {
-      setUsers([...users, editingUser]);
-      toast({
-        title: "User Added",
-        description: `${editingUser.name} has been added successfully.`
-      });
+      // For new users, we don't include the id
+      const { id, ...userData } = editingUser;
+      createMutation.mutate(userData as UserType);
     } else {
-      setUsers(users.map(user => 
-        user.id === editingUser.id ? editingUser : user
-      ));
-      toast({
-        title: "User Updated",
-        description: `${editingUser.name} has been updated successfully.`
+      updateMutation.mutate({ 
+        id: editingUser.id, 
+        updates: editingUser 
       });
     }
-    
-    setEditingUser(null);
-    setIsAdding(false);
   };
 
   const handleCancel = () => {
@@ -110,43 +141,11 @@ const AdminUsers = () => {
     setIsAdding(false);
   };
 
-  const handleDelete = (id: string) => {
-    // Don't allow deletion of the default admin
-    const userToDelete = users.find(user => user.id === id);
-    
-    if (userToDelete?.email === "rohitparakh4@gmail.com") {
-      toast({
-        title: "Cannot Delete",
-        description: "The default admin user cannot be deleted.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (window.confirm(`Are you sure you want to delete "${userToDelete?.name}"?`)) {
-      setUsers(users.filter(user => user.id !== id));
-      toast({
-        title: "User Deleted",
-        description: `${userToDelete?.name} has been deleted successfully.`
-      });
-    }
-  };
-
-  const toggleStatus = (id: string) => {
-    setUsers(users.map(user => {
-      if (user.id === id) {
-        const newStatus = user.status === "active" ? "inactive" : "active";
-        return { ...user, status: newStatus as "active" | "inactive" };
-      }
-      return user;
-    }));
-    
-    const user = users.find(user => user.id === id);
-    const newStatus = user?.status === "active" ? "inactive" : "active";
-    
-    toast({
-      title: `User ${newStatus === "active" ? "Activated" : "Deactivated"}`,
-      description: `${user?.name} has been ${newStatus === "active" ? "activated" : "deactivated"}.`
+  const toggleStatus = (user: UserType) => {
+    const newStatus = user.status === "active" ? "inactive" : "active";
+    updateMutation.mutate({ 
+      id: user.id, 
+      updates: { status: newStatus }
     });
   };
 
@@ -158,6 +157,31 @@ const AdminUsers = () => {
       default: return "bg-gray-500/20 text-gray-300";
     }
   };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "active": return <span className="text-green-400">Active</span>;
+      case "inactive": return <span className="text-gray-400">Inactive</span>;
+      default: return <span>{status}</span>;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-10">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-500 p-4">
+        Error loading users. Please try again later.
+        {error instanceof Error && <div className="text-sm mt-2">{error.message}</div>}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -183,17 +207,6 @@ const AdminUsers = () => {
           
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-gray-300 block mb-1">Name</label>
-              <input 
-                type="text" 
-                value={editingUser.name}
-                onChange={e => setEditingUser({...editingUser, name: e.target.value})}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="User Name"
-              />
-            </div>
-            
-            <div>
               <label className="text-sm text-gray-300 block mb-1">Email</label>
               <input 
                 type="email" 
@@ -201,11 +214,22 @@ const AdminUsers = () => {
                 onChange={e => setEditingUser({...editingUser, email: e.target.value})}
                 className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
                 placeholder="user@example.com"
-                disabled={!isAdding && editingUser.email === "rohitparakh4@gmail.com"}
+                disabled={!isAdding} // Only allow email editing for new users
               />
-              {!isAdding && editingUser.email === "rohitparakh4@gmail.com" && (
-                <p className="text-xs text-amber-400 mt-1">Default admin email cannot be changed</p>
+              {!isAdding && (
+                <p className="text-xs text-amber-400 mt-1">Email cannot be changed after creation</p>
               )}
+            </div>
+            
+            <div>
+              <label className="text-sm text-gray-300 block mb-1">Full Name</label>
+              <input 
+                type="text" 
+                value={editingUser.full_name || ''}
+                onChange={e => setEditingUser({...editingUser, full_name: e.target.value})}
+                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                placeholder="Full Name"
+              />
             </div>
             
             <div>
@@ -214,15 +238,16 @@ const AdminUsers = () => {
                 value={editingUser.role}
                 onChange={e => setEditingUser({...editingUser, role: e.target.value as any})}
                 className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                disabled={!isAdding && editingUser.email === "rohitparakh4@gmail.com"}
               >
                 <option value="admin">Admin</option>
                 <option value="editor">Editor</option>
                 <option value="viewer">Viewer</option>
               </select>
-              {!isAdding && editingUser.email === "rohitparakh4@gmail.com" && (
-                <p className="text-xs text-amber-400 mt-1">Default admin role cannot be changed</p>
-              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Admin: Full access to all features<br />
+                Editor: Can edit content but not manage users<br />
+                Viewer: Read-only access
+              </p>
             </div>
             
             <div>
@@ -231,14 +256,10 @@ const AdminUsers = () => {
                 value={editingUser.status}
                 onChange={e => setEditingUser({...editingUser, status: e.target.value as any})}
                 className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                disabled={!isAdding && editingUser.email === "rohitparakh4@gmail.com"}
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
-              {!isAdding && editingUser.email === "rohitparakh4@gmail.com" && (
-                <p className="text-xs text-amber-400 mt-1">Default admin status cannot be changed</p>
-              )}
             </div>
           </div>
           
@@ -252,65 +273,95 @@ const AdminUsers = () => {
             <Button 
               onClick={handleSave}
               className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+              disabled={createMutation.isPending || updateMutation.isPending}
             >
-              <Save size={16} className="mr-2" />
+              {createMutation.isPending || updateMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+              ) : (
+                <Save size={16} className="mr-2" />
+              )}
               Save
             </Button>
           </div>
         </Card>
       ) : null}
 
-      <div className="space-y-4">
-        {users.map(user => (
-          <Card key={user.id} className="glass-card p-4 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-4">
-                  <User size={20} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium">{user.name}</h3>
-                  <p className="text-gray-400 text-sm">{user.email}</p>
-                </div>
-              </div>
+      <Card className="glass-card p-4 overflow-hidden">
+        <div className="rounded-md border border-white/10 overflow-hidden">
+          <Table>
+            <TableHeader className="bg-white/5">
+              <TableRow className="hover:bg-white/5 border-white/10">
+                <TableHead className="text-white">User</TableHead>
+                <TableHead className="text-white">Role</TableHead>
+                <TableHead className="text-white">Status</TableHead>
+                <TableHead className="text-white">Created</TableHead>
+                <TableHead className="text-white text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map(user => (
+                <TableRow key={user.id} className="hover:bg-white/5 border-white/10">
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-3">
+                        <User size={18} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-white">{user.full_name || 'Unnamed User'}</div>
+                        <div className="text-sm text-gray-400">
+                          <div className="flex items-center">
+                            <MailOpen size={12} className="mr-1" />
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded text-xs ${getRoleBadgeColor(user.role)}`}>
+                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {getStatusText(user.status)}
+                  </TableCell>
+                  <TableCell className="text-gray-400 text-sm">
+                    {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'Unknown'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => toggleStatus(user)}
+                        className={user.status === "active" ? "text-green-400" : "text-gray-500"}
+                      >
+                        {user.status === "active" ? <UserCheck size={16} /> : <UserX size={16} />}
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEdit(user)}
+                      >
+                        <Edit size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
               
-              <div className="flex items-center space-x-3">
-                <span className={`text-xs px-2 py-1 rounded ${getRoleBadgeColor(user.role)}`}>
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </span>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => toggleStatus(user.id)}
-                  disabled={user.email === "rohitparakh4@gmail.com"}
-                  className={user.status === "active" ? "text-green-400" : "text-gray-500"}
-                >
-                  {user.status === "active" ? <UserCheck size={18} /> : <UserX size={18} />}
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleEdit(user)}
-                >
-                  <Edit size={18} />
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleDelete(user.id)}
-                  disabled={user.email === "rohitparakh4@gmail.com"}
-                  className="text-red-500 hover:text-red-400 disabled:text-gray-600"
-                >
-                  <Trash2 size={18} />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                    No users found. Click "Add User" to create one.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 };

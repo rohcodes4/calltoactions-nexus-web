@@ -23,13 +23,23 @@ export type Service = {
   created_at?: string;
 };
 
+// Enhanced Portfolio type with new fields
 export type Portfolio = {
   id: string;
   title: string;
   category: string;
-  imageUrl: string; // This must match the column name in Supabase
+  imageUrl: string;
   description: string;
   link: string;
+  client_name?: string;
+  completion_date?: string;
+  technologies?: string[];
+  challenges?: string;
+  solutions?: string;
+  testimonial_id?: string;
+  featured?: boolean;
+  gallery?: string[];
+  project_duration?: string;
   created_at?: string;
 };
 
@@ -43,16 +53,20 @@ export type Testimonial = {
   created_at?: string;
 };
 
+// Updated ContactMessage type with improved status management
 export type ContactMessage = {
   id: string;
   name: string;
   email: string;
   message: string;
   created_at: string;
-  isRead: boolean; // This must match the column name in Supabase
+  isRead: boolean;
+  status: string;
+  assigned_to?: string;
+  last_updated?: string;
 };
 
-// New types for settings
+// Settings types
 export type GeneralSettings = {
   id: string;
   siteTitle: string;
@@ -70,5 +84,69 @@ export type SocialLinks = {
   instagram: string;
   linkedin: string;
   youtube: string;
+  updated_at?: string;
+};
+
+// CRM Types
+export type User = {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  role: 'admin' | 'editor' | 'viewer';
+  status: 'active' | 'inactive';
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  company?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+  notes?: string;
+  status: 'active' | 'inactive' | 'lead';
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Project = {
+  id: string;
+  client_id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
+  start_date?: string;
+  end_date?: string;
+  budget?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Invoice = {
+  id: string;
+  project_id?: string;
+  client_id: string;
+  amount: number;
+  status: 'unpaid' | 'paid' | 'overdue' | 'cancelled';
+  due_date?: string;
+  issued_date: string;
+  paid_date?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Proposal = {
+  id: string;
+  client_id: string;
+  title: string;
+  content?: string;
+  ai_generated: boolean;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  created_at?: string;
   updated_at?: string;
 };
