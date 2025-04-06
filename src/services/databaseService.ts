@@ -23,7 +23,8 @@ export const fetchServices = async (): Promise<Service[]> => {
 };
 
 export const createService = async (service: Omit<Service, 'id'>): Promise<Service | null> => {
-  // Modified: Now expecting service without an ID
+  console.log('Creating service:', service); // Debug log
+  
   const { data, error } = await supabase
     .from('services')
     .insert([{ ...service }])
@@ -34,7 +35,7 @@ export const createService = async (service: Omit<Service, 'id'>): Promise<Servi
     console.error('Error creating service:', error);
     toast({
       title: 'Error',
-      description: 'Failed to create service. Please try again.',
+      description: `Failed to create service: ${error.message}`,
       variant: 'destructive',
     });
     return null;
@@ -49,6 +50,8 @@ export const createService = async (service: Omit<Service, 'id'>): Promise<Servi
 };
 
 export const updateService = async (id: string, updates: Partial<Service>): Promise<Service | null> => {
+  console.log('Updating service:', id, updates); // Debug log
+  
   const { data, error } = await supabase
     .from('services')
     .update(updates)
@@ -60,7 +63,7 @@ export const updateService = async (id: string, updates: Partial<Service>): Prom
     console.error('Error updating service:', error);
     toast({
       title: 'Error',
-      description: 'Failed to update service. Please try again.',
+      description: `Failed to update service: ${error.message}`,
       variant: 'destructive',
     });
     return null;
@@ -75,6 +78,8 @@ export const updateService = async (id: string, updates: Partial<Service>): Prom
 };
 
 export const deleteService = async (id: string): Promise<boolean> => {
+  console.log('Deleting service:', id); // Debug log
+  
   const { error } = await supabase
     .from('services')
     .delete()
@@ -84,7 +89,7 @@ export const deleteService = async (id: string): Promise<boolean> => {
     console.error('Error deleting service:', error);
     toast({
       title: 'Error',
-      description: 'Failed to delete service. Please try again.',
+      description: `Failed to delete service: ${error.message}`,
       variant: 'destructive',
     });
     return false;
@@ -119,7 +124,8 @@ export const fetchPortfolio = async (): Promise<Portfolio[]> => {
 };
 
 export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>): Promise<Portfolio | null> => {
-  // Modified: Now expecting item without an ID
+  console.log('Creating portfolio item:', item); // Debug log
+  
   const { data, error } = await supabase
     .from('portfolio')
     .insert([{ ...item }])
@@ -130,7 +136,7 @@ export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>): Promise<
     console.error('Error creating portfolio item:', error);
     toast({
       title: 'Error',
-      description: 'Failed to create portfolio item. Please try again.',
+      description: `Failed to create portfolio item: ${error.message}`,
       variant: 'destructive',
     });
     return null;
@@ -145,6 +151,8 @@ export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>): Promise<
 };
 
 export const updatePortfolioItem = async (id: string, updates: Partial<Portfolio>): Promise<Portfolio | null> => {
+  console.log('Updating portfolio item:', id, updates); // Debug log
+  
   const { data, error } = await supabase
     .from('portfolio')
     .update(updates)
@@ -156,7 +164,7 @@ export const updatePortfolioItem = async (id: string, updates: Partial<Portfolio
     console.error('Error updating portfolio item:', error);
     toast({
       title: 'Error',
-      description: 'Failed to update portfolio item. Please try again.',
+      description: `Failed to update portfolio item: ${error.message}`,
       variant: 'destructive',
     });
     return null;
@@ -171,6 +179,8 @@ export const updatePortfolioItem = async (id: string, updates: Partial<Portfolio
 };
 
 export const deletePortfolioItem = async (id: string): Promise<boolean> => {
+  console.log('Deleting portfolio item:', id); // Debug log
+  
   const { error } = await supabase
     .from('portfolio')
     .delete()
@@ -180,7 +190,7 @@ export const deletePortfolioItem = async (id: string): Promise<boolean> => {
     console.error('Error deleting portfolio item:', error);
     toast({
       title: 'Error',
-      description: 'Failed to delete portfolio item. Please try again.',
+      description: `Failed to delete portfolio item: ${error.message}`,
       variant: 'destructive',
     });
     return false;
@@ -216,6 +226,8 @@ export const fetchTestimonials = async (): Promise<Testimonial[]> => {
 
 // Contact Messages
 export const submitContactForm = async (formData: { name: string; email: string; message: string }): Promise<boolean> => {
+  console.log('Submitting contact form:', formData); // Debug log
+  
   const { error } = await supabase
     .from('contact_messages')
     .insert([{ 
@@ -227,7 +239,7 @@ export const submitContactForm = async (formData: { name: string; email: string;
     console.error('Error submitting contact form:', error);
     toast({
       title: 'Error',
-      description: 'Failed to submit your message. Please try again.',
+      description: `Failed to submit your message: ${error.message}`,
       variant: 'destructive',
     });
     return false;
@@ -261,6 +273,8 @@ export const fetchContactMessages = async (): Promise<ContactMessage[]> => {
 };
 
 export const markMessageAsRead = async (id: string): Promise<boolean> => {
+  console.log('Marking message as read:', id); // Debug log
+  
   const { error } = await supabase
     .from('contact_messages')
     .update({ isRead: true })
@@ -270,7 +284,7 @@ export const markMessageAsRead = async (id: string): Promise<boolean> => {
     console.error('Error marking message as read:', error);
     toast({
       title: 'Error',
-      description: 'Failed to update message status. Please try again.',
+      description: `Failed to update message status: ${error.message}`,
       variant: 'destructive',
     });
     return false;

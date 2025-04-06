@@ -7,6 +7,14 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Enable debug logging in development
+if (import.meta.env.DEV) {
+  supabase.handleErrorsWithFallback = (error, fallback) => {
+    console.error('Supabase error:', error);
+    return fallback;
+  };
+}
+
 // Database types
 export type Service = {
   id: string;
@@ -22,7 +30,7 @@ export type Portfolio = {
   id: string;
   title: string;
   category: string;
-  imageUrl: string;
+  imageUrl: string; // This must match the column name in Supabase
   description: string;
   link: string;
   created_at?: string;
@@ -44,5 +52,5 @@ export type ContactMessage = {
   email: string;
   message: string;
   created_at: string;
-  isRead: boolean;
+  isRead: boolean; // This must match the column name in Supabase
 };

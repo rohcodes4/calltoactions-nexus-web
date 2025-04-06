@@ -7,10 +7,12 @@ import { fetchContactMessages, markMessageAsRead } from '@/services/databaseServ
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ContactMessage } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
 
 const ContactSubmissions = () => {
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch messages from database
   const { data: messages = [], isLoading, error } = useQuery({
@@ -23,6 +25,18 @@ const ContactSubmissions = () => {
     mutationFn: markMessageAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
+      toast({
+        title: 'Success',
+        description: 'Message marked as read',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: 'Failed to mark message as read',
+        variant: 'destructive',
+      });
+      console.error('Error marking message as read:', error);
     }
   });
 
@@ -35,6 +49,9 @@ const ContactSubmissions = () => {
     }
   };
 
+  // For debugging
+  console.log('Messages:', messages);
+
   if (isLoading) {
     return <div className="flex justify-center py-10">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
@@ -44,6 +61,7 @@ const ContactSubmissions = () => {
   if (error) {
     return <div className="text-red-500 p-4">
       Error loading messages. Please try again later.
+      {error instanceof Error && <div className="text-sm mt-2">{error.message}</div>}
     </div>;
   }
 
