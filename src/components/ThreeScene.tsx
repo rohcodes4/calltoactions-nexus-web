@@ -32,7 +32,7 @@ const FloatingText = ({ position = [0, 0, 0], text = "CallToActions" }) => {
         ref={textRef}
         position={position as [number, number, number]}
         font="/fonts/Inter_Bold.json"
-        scale={0.5}
+        size={0.5}
         height={0.2}
         curveSegments={12}
         bevelEnabled
@@ -125,8 +125,8 @@ const ParticleField = ({ count = 100 }) => {
       <pointsMaterial 
         size={0.05} 
         color="#4CC9F0" 
-        sizeAttenuation 
-        transparent 
+        sizeAttenuation
+        transparent
         opacity={0.8}
       />
     </points>
