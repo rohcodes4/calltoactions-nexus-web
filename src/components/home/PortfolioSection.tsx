@@ -4,13 +4,19 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import PortfolioItem from '@/components/PortfolioItem';
 import { useQuery } from '@tanstack/react-query';
-import { fetchPortfolio } from '@/services/databaseService';
+import { fetchPortfolio, fetchGeneralSettings } from '@/services/databaseService';
 
 const PortfolioSection = () => {
   // Fetch portfolio items from database
-  const { data: portfolioItems = [], isLoading } = useQuery({
+  const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio'],
     queryFn: fetchPortfolio
+  });
+
+  // Fetch general settings
+  const { data: settings } = useQuery({
+    queryKey: ['generalSettings'],
+    queryFn: fetchGeneralSettings
   });
 
   return (
@@ -21,11 +27,11 @@ const PortfolioSection = () => {
             Featured <span className="text-gradient">Projects</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Explore our latest work and see how we've helped brands achieve their goals.
+            {settings ? `Explore our latest work at ${settings.siteTitle} and see how we've helped brands achieve their goals.` : 'Explore our latest work and see how we've helped brands achieve their goals.'}
           </p>
         </div>
         
-        {isLoading ? (
+        {isLoadingPortfolio ? (
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
           </div>

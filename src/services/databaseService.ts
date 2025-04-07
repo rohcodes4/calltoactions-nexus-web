@@ -1,5 +1,5 @@
 
-import { supabase, Service, Portfolio, Testimonial, ContactMessage, User, Client, Project, Invoice, Proposal } from '@/lib/supabase';
+import { supabase, Service, Portfolio, Testimonial, ContactMessage, GeneralSettings, SocialLinks, User, Client, Project, Invoice, Proposal, NewsletterSubscription } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 
 // ------------------- SERVICES CRUD -------------------
@@ -332,7 +332,7 @@ export const markMessageAsUnread = async (id: string): Promise<boolean> => {
 };
 
 // ------------------- SETTINGS -------------------
-export const fetchGeneralSettings = async () => {
+export const fetchGeneralSettings = async (): Promise<GeneralSettings> => {
   const { data, error } = await supabase
     .from('general_settings')
     .select('*')
@@ -346,7 +346,7 @@ export const fetchGeneralSettings = async () => {
   return data;
 };
 
-export const updateGeneralSettings = async (id: string, updates: Partial<GeneralSettings>) => {
+export const updateGeneralSettings = async (id: string, updates: Partial<GeneralSettings>): Promise<GeneralSettings> => {
   const { data, error } = await supabase
     .from('general_settings')
     .update({
@@ -365,7 +365,7 @@ export const updateGeneralSettings = async (id: string, updates: Partial<General
   return data;
 };
 
-export const fetchSocialLinks = async () => {
+export const fetchSocialLinks = async (): Promise<SocialLinks> => {
   const { data, error } = await supabase
     .from('social_links')
     .select('*')
@@ -379,7 +379,7 @@ export const fetchSocialLinks = async () => {
   return data;
 };
 
-export const updateSocialLinks = async (id: string, updates: Partial<SocialLinks>) => {
+export const updateSocialLinks = async (id: string, updates: Partial<SocialLinks>): Promise<SocialLinks> => {
   const { data, error } = await supabase
     .from('social_links')
     .update({
@@ -396,6 +396,110 @@ export const updateSocialLinks = async (id: string, updates: Partial<SocialLinks
   }
   
   return data;
+};
+
+// ------------------- NEWSLETTER SUBSCRIPTIONS -------------------
+export const fetchNewsletterSubscriptions = async (): Promise<NewsletterSubscription[]> => {
+  const { data, error } = await supabase
+    .from('newsletter_subscriptions')
+    .select('*')
+    .order('subscribed_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching newsletter subscriptions:', error);
+    toast({
+      title: 'Error',
+      description: 'Failed to load subscriptions. Please try again.',
+      variant: 'destructive',
+    });
+    return [];
+  }
+  
+  return data || [];
+};
+
+export const createNewsletterSubscription = async (subscription: Omit<NewsletterSubscription, 'id'>): Promise<NewsletterSubscription | null> => {
+  console.log('Creating newsletter subscription:', subscription);
+  
+  const { data, error } = await supabase
+    .from('newsletter_subscriptions')
+    .insert([{ ...subscription }])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating newsletter subscription:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to create subscription: ${error.message}`,
+      variant: 'destructive',
+    });
+    return null;
+  }
+  
+  toast({
+    title: 'Success',
+    description: 'Subscription created successfully',
+  });
+  
+  return data;
+};
+
+export const updateNewsletterSubscription = async (id: string, updates: Partial<NewsletterSubscription>): Promise<NewsletterSubscription | null> => {
+  console.log('Updating newsletter subscription:', id, updates);
+  
+  const { data, error } = await supabase
+    .from('newsletter_subscriptions')
+    .update({
+      ...updates,
+      last_updated: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating newsletter subscription:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to update subscription: ${error.message}`,
+      variant: 'destructive',
+    });
+    return null;
+  }
+  
+  toast({
+    title: 'Success',
+    description: 'Subscription updated successfully',
+  });
+  
+  return data;
+};
+
+export const deleteNewsletterSubscription = async (id: string): Promise<boolean> => {
+  console.log('Deleting newsletter subscription:', id);
+  
+  const { error } = await supabase
+    .from('newsletter_subscriptions')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting newsletter subscription:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to delete subscription: ${error.message}`,
+      variant: 'destructive',
+    });
+    return false;
+  }
+  
+  toast({
+    title: 'Success',
+    description: 'Subscription deleted successfully',
+  });
+  
+  return true;
 };
 
 // ------------------- USERS -------------------

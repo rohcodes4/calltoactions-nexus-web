@@ -87,6 +87,16 @@ export type SocialLinks = {
   updated_at?: string;
 };
 
+// Newsletter subscription type
+export type NewsletterSubscription = {
+  id: string;
+  email: string;
+  name?: string;
+  subscribed_at: string;
+  status: 'active' | 'unsubscribed';
+  last_updated?: string;
+};
+
 // CRM Types
 export type User = {
   id: string;

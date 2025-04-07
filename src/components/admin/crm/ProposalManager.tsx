@@ -37,6 +37,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Interface for AI proposal generation
+interface AIProposalParams {
+  clientId: string;
+  title: string;
+  details: { 
+    clientInfo: Client; 
+    projectScope: string; 
+    budget: string; 
+    timeline: string; 
+    requirements: string[] 
+  };
+}
+
 const ProposalManager = () => {
   const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
   const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
@@ -99,7 +112,11 @@ const ProposalManager = () => {
 
   // AI Generate proposal mutation
   const generateAIMutation = useMutation({
-    mutationFn: generateProposalWithAI,
+    mutationFn: (params: AIProposalParams) => generateProposalWithAI(
+      params.clientId,
+      params.title,
+      params.details
+    ),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       if (data) {
@@ -162,7 +179,7 @@ const ProposalManager = () => {
     if (isAdding) {
       // For new proposals, we don't include the id
       const { id, ...proposalData } = editingProposal;
-      createMutation.mutate(proposalData as Proposal);
+      createMutation.mutate(proposalData as Omit<Proposal, 'id'>);
     } else {
       updateMutation.mutate({ 
         id: editingProposal.id, 
@@ -313,7 +330,7 @@ const ProposalManager = () => {
       ) : null}
 
       <Card className="glass-card p-4 overflow-hidden">
-        <div className="rounded-md border border-white/10 overflow-hidden">
+        <div className="rounded-md border border-white/10 overflow-x-auto">
           <Table>
             <TableHeader className="bg-white/5">
               <TableRow className="hover:bg-white/5 border-white/10">
