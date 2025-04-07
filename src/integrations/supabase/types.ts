@@ -111,6 +111,63 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string | null
+          due_date: string | null
+          id: string
+          issued_date: string
+          notes: string | null
+          paid_date: string | null
+          project_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          issued_date: string
+          notes?: string | null
+          paid_date?: string | null
+          project_id?: string | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          issued_date?: string
+          notes?: string | null
+          paid_date?: string | null
+          project_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio: {
         Row: {
           category: string
@@ -320,7 +377,7 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
-          full_name: string
+          full_name: string | null
           id: string
           role: string
           status: string
@@ -329,16 +386,16 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email: string
-          full_name: string
+          full_name?: string | null
           id?: string
-          role: string
-          status: string
+          role?: string
+          status?: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
-          full_name?: string
+          full_name?: string | null
           id?: string
           role?: string
           status?: string

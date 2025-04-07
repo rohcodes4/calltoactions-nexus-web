@@ -110,9 +110,9 @@ const InvoiceManager = () => {
       amount: 0,
       status: "unpaid",
       issued_date: new Date().toISOString().split('T')[0],
-      project_id: "",
-      due_date: "",
-      paid_date: "",
+      project_id: null, // Changed from empty string to null
+      due_date: null,   // Changed from empty string to null
+      paid_date: null,  // Changed from empty string to null
       notes: ""
     };
     setEditingInvoice(newInvoice);
@@ -138,14 +138,31 @@ const InvoiceManager = () => {
   const handleSave = () => {
     if (!editingInvoice) return;
     
+    // Make a copy to modify
+    const invoiceToSave = { ...editingInvoice };
+    
+    // Handle empty strings for date fields
+    if (invoiceToSave.due_date === "") {
+      invoiceToSave.due_date = null;
+    }
+    
+    if (invoiceToSave.paid_date === "") {
+      invoiceToSave.paid_date = null;
+    }
+    
+    // Handle empty project_id
+    if (invoiceToSave.project_id === "") {
+      invoiceToSave.project_id = null;
+    }
+    
     if (isAdding) {
       // For new invoices, we don't include the id
-      const { id, ...invoiceData } = editingInvoice;
+      const { id, ...invoiceData } = invoiceToSave;
       createMutation.mutate(invoiceData as Omit<Invoice, 'id'>);
     } else {
       updateMutation.mutate({ 
-        id: editingInvoice.id, 
-        updates: editingInvoice 
+        id: invoiceToSave.id, 
+        updates: invoiceToSave 
       });
     }
   };
@@ -166,6 +183,33 @@ const InvoiceManager = () => {
     if (!editingInvoice) return;
     
     const { name, value } = e.target;
+    
+    // Special handling for date and project fields
+    if ((name === 'due_date' || name === 'paid_date') && value === '') {
+      // Set to null if the field is empty
+      setEditingInvoice(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [name]: null
+        };
+      });
+      return;
+    }
+    
+    if (name === 'project_id' && value === '') {
+      // Set project_id to null if empty selection
+      setEditingInvoice(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          project_id: null
+        };
+      });
+      return;
+    }
+    
+    // Regular field handling
     setEditingInvoice(prev => {
       if (!prev) return prev;
       return {
@@ -190,7 +234,7 @@ const InvoiceManager = () => {
     return client ? client.name : 'Unknown Client';
   };
 
-  const getProjectName = (projectId: string) => {
+  const getProjectName = (projectId: string | null) => {
     if (!projectId) return 'No Project';
     const project = projects.find(p => p.id === projectId);
     return project ? project.title : 'Unknown Project';
@@ -309,7 +353,7 @@ const InvoiceManager = () => {
                 <input 
                   type="date" 
                   name="due_date"
-                  value={editingInvoice.due_date ? editingInvoice.due_date.split('T')[0] : ''}
+                  value={editingInvoice.due_date ? (typeof editingInvoice.due_date === 'string' ? editingInvoice.due_date.split('T')[0] : '') : ''}
                   onChange={handleInputChange}
                   className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
                 />
@@ -338,7 +382,7 @@ const InvoiceManager = () => {
                   <input 
                     type="date" 
                     name="paid_date"
-                    value={editingInvoice.paid_date ? editingInvoice.paid_date.split('T')[0] : ''}
+                    value={editingInvoice.paid_date ? (typeof editingInvoice.paid_date === 'string' ? editingInvoice.paid_date.split('T')[0] : '') : ''}
                     onChange={handleInputChange}
                     className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
                   />
@@ -409,7 +453,7 @@ const InvoiceManager = () => {
                     {getClientName(invoice.client_id)}
                   </TableCell>
                   <TableCell>
-                    {invoice.project_id ? getProjectName(invoice.project_id) : '-'}
+                    {getProjectName(invoice.project_id)}
                   </TableCell>
                   <TableCell>
                     <div className="text-green-400 font-semibold">

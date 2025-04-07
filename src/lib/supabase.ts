@@ -138,13 +138,13 @@ export type Project = {
 
 export type Invoice = {
   id: string;
-  project_id?: string;
+  project_id?: string | null;
   client_id: string;
   amount: number;
   status: 'unpaid' | 'paid' | 'overdue' | 'cancelled';
-  due_date?: string;
+  due_date?: string | null;
   issued_date: string;
-  paid_date?: string;
+  paid_date?: string | null;
   notes?: string;
   created_at?: string;
   updated_at?: string;
