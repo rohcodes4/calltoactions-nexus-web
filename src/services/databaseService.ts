@@ -1,4 +1,3 @@
-
 import { supabase, Service, Portfolio, Testimonial, ContactMessage, GeneralSettings, SocialLinks, User, Client, Project, Invoice, Proposal, NewsletterSubscription } from '@/lib/supabase';
 import { toast } from '@/components/ui/use-toast';
 
@@ -832,6 +831,21 @@ export const fetchInvoices = async (): Promise<Invoice[]> => {
   return data || [];
 };
 
+export const fetchInvoiceByShareToken = async (token: string): Promise<Invoice | null> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('share_token', token)
+    .single();
+  
+  if (error) {
+    console.error('Error fetching invoice by share token:', error);
+    return null;
+  }
+  
+  return data;
+};
+
 export const createInvoice = async (invoice: Omit<Invoice, 'id'>): Promise<Invoice | null> => {
   console.log('Creating invoice:', invoice);
   
@@ -914,6 +928,52 @@ export const deleteInvoice = async (id: string): Promise<boolean> => {
   });
   
   return true;
+};
+
+export const shareInvoice = async (id: string): Promise<string | null> => {
+  // Get the invoice to make sure the share token exists
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('share_token')
+    .eq('id', id)
+    .single();
+  
+  if (error || !data) {
+    console.error('Error fetching invoice for sharing:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to share invoice: ${error?.message || 'Invoice not found'}`,
+      variant: 'destructive',
+    });
+    return null;
+  }
+  
+  // If no share token, generate one
+  if (!data.share_token) {
+    const { data: updatedData, error: updateError } = await supabase
+      .from('invoices')
+      .update({
+        share_token: crypto.randomUUID().replace(/-/g, ''),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select('share_token')
+      .single();
+    
+    if (updateError || !updatedData) {
+      console.error('Error updating invoice with share token:', updateError);
+      toast({
+        title: 'Error',
+        description: `Failed to generate share link: ${updateError?.message || 'Unknown error'}`,
+        variant: 'destructive',
+      });
+      return null;
+    }
+    
+    return updatedData.share_token;
+  }
+  
+  return data.share_token;
 };
 
 // ------------------- CRM: Proposals -------------------

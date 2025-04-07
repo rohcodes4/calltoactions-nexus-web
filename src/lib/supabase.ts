@@ -148,6 +148,11 @@ export type Invoice = {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  // New fields
+  advance_payment?: number;
+  tax_percentage?: number;
+  custom_tax_name?: string;
+  share_token?: string;
 };
 
 export type Proposal = {

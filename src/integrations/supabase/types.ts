@@ -113,42 +113,54 @@ export type Database = {
       }
       invoices: {
         Row: {
+          advance_payment: number | null
           amount: number
           client_id: string
           created_at: string | null
+          custom_tax_name: string | null
           due_date: string | null
           id: string
           issued_date: string
           notes: string | null
           paid_date: string | null
           project_id: string | null
+          share_token: string | null
           status: string
+          tax_percentage: number | null
           updated_at: string | null
         }
         Insert: {
+          advance_payment?: number | null
           amount: number
           client_id: string
           created_at?: string | null
+          custom_tax_name?: string | null
           due_date?: string | null
           id?: string
           issued_date: string
           notes?: string | null
           paid_date?: string | null
           project_id?: string | null
+          share_token?: string | null
           status: string
+          tax_percentage?: number | null
           updated_at?: string | null
         }
         Update: {
+          advance_payment?: number | null
           amount?: number
           client_id?: string
           created_at?: string | null
+          custom_tax_name?: string | null
           due_date?: string | null
           id?: string
           issued_date?: string
           notes?: string | null
           paid_date?: string | null
           project_id?: string | null
+          share_token?: string | null
           status?: string
+          tax_percentage?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -408,7 +420,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_share_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

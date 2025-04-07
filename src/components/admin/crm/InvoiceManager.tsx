@@ -11,7 +11,10 @@ import {
   DollarSign,
   FileText,
   Tag,
-  Send
+  Send,
+  Download,
+  Share2,
+  Copy
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Invoice, Client, Project } from '@/lib/supabase';
@@ -21,7 +24,8 @@ import {
   updateInvoice, 
   deleteInvoice, 
   fetchClients,
-  fetchProjects
+  fetchProjects,
+  shareInvoice
 } from '@/services/databaseService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -33,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { downloadPdf } from '@/utils/pdfUtils';
 
 const InvoiceManager = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
@@ -98,6 +103,31 @@ const InvoiceManager = () => {
     }
   });
 
+  // Share invoice mutation
+  const shareMutation = useMutation({
+    mutationFn: shareInvoice,
+    onSuccess: (shareToken, invoiceId) => {
+      if (shareToken) {
+        const shareUrl = `${window.location.origin}/invoices/shared/${shareToken}`;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(shareUrl)
+          .then(() => {
+            toast({
+              title: "Share Link Copied",
+              description: "The invoice share link has been copied to your clipboard"
+            });
+          })
+          .catch(() => {
+            toast({
+              title: "Share Link Created",
+              description: "The invoice share link has been created but couldn't be copied automatically"
+            });
+          });
+      }
+    }
+  });
+
   const handleEdit = (invoice: Invoice) => {
     setEditingInvoice({ ...invoice });
     setIsAdding(false);
@@ -110,10 +140,13 @@ const InvoiceManager = () => {
       amount: 0,
       status: "unpaid",
       issued_date: new Date().toISOString().split('T')[0],
-      project_id: null, // Changed from empty string to null
-      due_date: null,   // Changed from empty string to null
-      paid_date: null,  // Changed from empty string to null
-      notes: ""
+      project_id: null,
+      due_date: null,
+      paid_date: null,
+      notes: "",
+      advance_payment: 0,
+      tax_percentage: 0,
+      custom_tax_name: "Tax"
     };
     setEditingInvoice(newInvoice);
     setIsAdding(true);
@@ -174,8 +207,56 @@ const InvoiceManager = () => {
 
   const handleDelete = (id: string) => {
     const invoiceToDelete = invoices.find(i => i.id === id);
-    if (confirm(`Are you sure you want to delete invoice #${invoiceToDelete?.id}?`)) {
+    if (confirm(`Are you sure you want to delete invoice #${invoiceToDelete?.id.substring(0, 8)}?`)) {
       deleteMutation.mutate(id);
+    }
+  };
+
+  const handleShare = (id: string) => {
+    shareMutation.mutate(id);
+  };
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    const client = clients.find(c => c.id === invoice.client_id);
+    const project = invoice.project_id ? projects.find(p => p.id === invoice.project_id) : null;
+    
+    if (!client) {
+      toast({
+        title: "Error",
+        description: "Client information not found",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Fetch general settings for company info
+      const { data: generalSettings } = await supabase
+        .from('general_settings')
+        .select('*')
+        .single();
+      
+      await downloadPdf({
+        invoice,
+        client,
+        project,
+        companyName: generalSettings?.siteTitle || 'Your Company',
+        companyAddress: generalSettings?.address,
+        companyPhone: generalSettings?.phoneNumber,
+        companyEmail: generalSettings?.adminEmail,
+      });
+      
+      toast({
+        title: "Download started",
+        description: "Your invoice PDF is being generated and downloaded"
+      });
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      toast({
+        title: "Download failed",
+        description: "Failed to generate or download the PDF",
+        variant: "destructive"
+      });
     }
   };
 
@@ -204,6 +285,18 @@ const InvoiceManager = () => {
         return {
           ...prev,
           project_id: null
+        };
+      });
+      return;
+    }
+    
+    // Handle numeric fields
+    if (name === 'amount' || name === 'advance_payment' || name === 'tax_percentage') {
+      setEditingInvoice(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [name]: value === '' ? 0 : parseFloat(value)
         };
       });
       return;
@@ -238,6 +331,15 @@ const InvoiceManager = () => {
     if (!projectId) return 'No Project';
     const project = projects.find(p => p.id === projectId);
     return project ? project.title : 'Unknown Project';
+  };
+  
+  // Calculate totals for an invoice
+  const calculateTotal = (invoice: Invoice) => {
+    const subtotal = invoice.amount || 0;
+    const advancePayment = invoice.advance_payment || 0;
+    const taxPercentage = invoice.tax_percentage || 0;
+    const taxAmount = ((subtotal - advancePayment) * (taxPercentage / 100));
+    return subtotal - advancePayment + taxAmount;
   };
 
   if (isLoadingInvoices) {
@@ -317,7 +419,7 @@ const InvoiceManager = () => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm text-gray-300 block mb-1">Amount*</label>
                 <div className="relative">
@@ -336,6 +438,66 @@ const InvoiceManager = () => {
                 </div>
               </div>
               
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Advance Payment (Optional)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-400">$</span>
+                  <input 
+                    type="number" 
+                    name="advance_payment"
+                    value={editingInvoice.advance_payment || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2 pl-6 rounded bg-white/10 border border-white/20 text-white"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Tax Percentage (%)</label>
+                <input 
+                  type="number" 
+                  name="tax_percentage"
+                  value={editingInvoice.tax_percentage || ''}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  placeholder="0"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Tax Name</label>
+                <input 
+                  type="text" 
+                  name="custom_tax_name"
+                  value={editingInvoice.custom_tax_name || ''}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  placeholder="Tax"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Total with Tax</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-400">$</span>
+                  <input 
+                    type="text" 
+                    value={calculateTotal(editingInvoice).toFixed(2)}
+                    className="w-full p-2 pl-6 rounded bg-white/10 border border-white/20 text-white"
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="text-sm text-gray-300 block mb-1">Issued Date*</label>
                 <input 
@@ -358,9 +520,7 @@ const InvoiceManager = () => {
                   className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
               <div>
                 <label className="text-sm text-gray-300 block mb-1">Status</label>
                 <select 
@@ -375,20 +535,20 @@ const InvoiceManager = () => {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-              
-              {editingInvoice.status === 'paid' && (
-                <div>
-                  <label className="text-sm text-gray-300 block mb-1">Paid Date</label>
-                  <input 
-                    type="date" 
-                    name="paid_date"
-                    value={editingInvoice.paid_date ? (typeof editingInvoice.paid_date === 'string' ? editingInvoice.paid_date.split('T')[0] : '') : ''}
-                    onChange={handleInputChange}
-                    className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                  />
-                </div>
-              )}
             </div>
+            
+            {editingInvoice.status === 'paid' && (
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Paid Date</label>
+                <input 
+                  type="date" 
+                  name="paid_date"
+                  value={editingInvoice.paid_date ? (typeof editingInvoice.paid_date === 'string' ? editingInvoice.paid_date.split('T')[0] : '') : ''}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                />
+              </div>
+            )}
             
             <div>
               <label className="text-sm text-gray-300 block mb-1">Notes</label>
@@ -457,7 +617,7 @@ const InvoiceManager = () => {
                   </TableCell>
                   <TableCell>
                     <div className="text-green-400 font-semibold">
-                      ${invoice.amount.toFixed(2)}
+                      ${calculateTotal(invoice).toFixed(2)}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -497,10 +657,19 @@ const InvoiceManager = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => window.open(`/invoices/view/${invoice.id}`, '_blank')}
-                        title="View Invoice"
+                        onClick={() => handleDownloadPdf(invoice)}
+                        title="Download PDF"
                       >
-                        <FileText size={16} />
+                        <Download size={16} />
+                      </Button>
+                      
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleShare(invoice.id)}
+                        title="Share Invoice"
+                      >
+                        <Share2 size={16} />
                       </Button>
                       
                       <Button 
