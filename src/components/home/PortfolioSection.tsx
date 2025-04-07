@@ -27,7 +27,7 @@ const PortfolioSection = () => {
             Featured <span className="text-gradient">Projects</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            {settings ? `Explore our latest work at ${settings.siteTitle} and see how we've helped brands achieve their goals.` : 'Explore our latest work and see how we've helped brands achieve their goals.'}
+            {settings ? `Explore our latest work at ${settings.siteTitle} and see how we've helped brands achieve their goals.` : 'Explore our latest work and see how we\'ve helped brands achieve their goals.'}
           </p>
         </div>
         
