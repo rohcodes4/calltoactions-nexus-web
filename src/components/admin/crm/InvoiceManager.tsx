@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Invoice, Client, Project } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase'; // Add the supabase import
 import { 
   fetchInvoices, 
   createInvoice, 
