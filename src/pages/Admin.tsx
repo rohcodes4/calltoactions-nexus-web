@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import {
   FolderKanban, 
   PanelLeft, 
   LogOut, 
-  Mail, 
+  Mail,
   Lock,
   Briefcase,
   FileText,
@@ -29,6 +28,7 @@ import ProjectManager from '@/components/admin/crm/ProjectManager';
 import ProposalManager from '@/components/admin/crm/ProposalManager';
 import NewsletterManager from '@/components/admin/NewsletterManager';
 import InvoiceManager from '@/components/admin/crm/InvoiceManager';
+import RegisterForm from '@/components/admin/RegisterForm';
 import { supabase } from '@/lib/supabase';
 
 const Admin = () => {
@@ -37,6 +37,7 @@ const Admin = () => {
   const [loginError, setLoginError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showRegister, setShowRegister] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
 
@@ -129,58 +130,83 @@ const Admin = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-agency-dark pt-20 flex items-center justify-center px-4">
-        <Card className="glass-card p-8 max-w-md w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Admin Login</h1>
-            <p className="text-gray-400">Sign in to access the admin dashboard</p>
+        {showRegister ? (
+          <div className="w-full max-w-md">
+            <RegisterForm />
+            <div className="text-center mt-4">
+              <Button 
+                variant="link" 
+                className="text-gray-400 hover:text-white" 
+                onClick={() => setShowRegister(false)}
+              >
+                Already have an account? Sign in
+              </Button>
+            </div>
           </div>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">Email</label>
-              <input 
-                type="email" 
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+        ) : (
+          <Card className="glass-card p-8 max-w-md w-full">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-white mb-2">Admin Login</h1>
+              <p className="text-gray-400">Sign in to access the admin dashboard</p>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">Password</label>
-              <input 
-                type="password" 
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            
-            {loginError && (
-              <div className="text-red-400 text-sm p-2 bg-red-400/10 rounded">
-                {loginError}
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Email</label>
+                <input 
+                  type="email" 
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
-            )}
-            
-            <Button 
-              type="submit"
-              className="w-full bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-              ) : (
-                "Login"
+              
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Password</label>
+                <input 
+                  type="password" 
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              
+              {loginError && (
+                <div className="text-red-400 text-sm p-2 bg-red-400/10 rounded">
+                  {loginError}
+                </div>
               )}
-            </Button>
-            
-            <p className="text-xs text-gray-500 text-center mt-4">
-              Demo credentials: admin@example.com / password123
-            </p>
-          </form>
-        </Card>
+              
+              <Button 
+                type="submit"
+                className="w-full bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                ) : (
+                  "Login"
+                )}
+              </Button>
+              
+              <div className="text-center mt-4">
+                <Button 
+                  variant="link" 
+                  className="text-gray-400 hover:text-white" 
+                  onClick={() => setShowRegister(true)}
+                >
+                  Need an account? Register
+                </Button>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Demo credentials: admin@example.com / password123
+              </p>
+            </form>
+          </Card>
+        )}
       </div>
     );
   }
