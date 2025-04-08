@@ -73,7 +73,7 @@ export const generatePdfBlob = async (config: InvoicePdfConfig): Promise<Blob> =
   
   // Status badge
   const getStatusColors = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'paid': return { bg: [46, 204, 113], text: [255, 255, 255] }; // green
       case 'overdue': return { bg: [231, 76, 60], text: [255, 255, 255] }; // red
       case 'cancelled': return { bg: [127, 140, 141], text: [255, 255, 255] }; // gray
@@ -272,7 +272,7 @@ export const generatePdfBlob = async (config: InvoicePdfConfig): Promise<Blob> =
   }
   
   // Payment status large watermark if paid
-  if (invoice.status === 'paid') {
+  if (invoice.status.toLowerCase() === 'paid') {
     doc.saveGraphicsState();
     doc.setGState(new (doc as any).GState({ opacity: 0.1 }));
     doc.setTextColor(46, 204, 113); // Green color
