@@ -31,6 +31,21 @@ export const fetchServiceById = async (id: string) => {
   return data;
 };
 
+export const fetchServiceBySlug = async (slug: string) => {
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+  
+  if (error) {
+    console.error(`Error fetching service with slug ${slug}:`, error);
+    throw new Error(error.message);
+  }
+  
+  return data;
+};
+
 // CREATE/UPDATE/DELETE Services
 export const createService = async (service: Omit<Service, 'id'>) => {
   const { data, error } = await supabase

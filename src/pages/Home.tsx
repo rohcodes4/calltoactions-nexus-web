@@ -9,6 +9,7 @@ import ContactSection from '@/components/home/ContactSection';
 import ResultsSection from '@/components/home/ResultsSection';
 import FAQSection from '@/components/home/FAQSection';
 import ProcessSection from '@/components/home/ProcessSection';
+import ClientLogos from '@/components/home/ClientLogos';
 import { Button } from '@/components/ui/button';
 import { ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,10 +36,11 @@ const Home = () => {
   return (
     <div className="flex flex-col min-h-screen bg-agency-dark">
       <HeroSection />
-      <ProcessSection />
+      <ClientLogos />
       <ServicesSection />
       <ResultsSection />
       <PortfolioSection />
+      <ProcessSection />
       <TestimonialsSection />
       <StatsSection />
       <FAQSection />

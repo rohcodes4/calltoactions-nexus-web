@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -21,6 +20,7 @@ export type Service = {
   details: string;
   benefits: string[];
   created_at?: string;
+  slug?: string;
 };
 
 // Enhanced Portfolio type with new fields

@@ -1,432 +1,345 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  FileText, 
-  Calendar, 
-  Send, 
-  Download, 
-  Sparkles,
-  Copy
-} from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { Proposal, Client } from '@/lib/supabase';
-import { 
-  fetchProposals, 
-  createProposal, 
-  updateProposal, 
-  deleteProposal, 
-  fetchClients,
-  generateProposalWithAI
-} from '@/services/databaseService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { fetchProposals, fetchClients, createProposal, updateProposal, deleteProposal, generateProposalWithAI } from '@/services/databaseService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
+import { Plus, Edit, Trash2, Check, X, Bot } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import ProposalForm from './ProposalForm';
 import ProposalView from './ProposalView';
 import AIProposalGenerator from './AIProposalGenerator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Proposal, Client } from '@/lib/supabase';
 
-// Interface for AI proposal generation
-interface AIProposalParams {
-  clientId: string;
-  title: string;
-  details: { 
-    clientInfo: Client; 
-    projectScope: string; 
-    budget: string; 
-    timeline: string; 
-    requirements: string[] 
-  };
-}
+const initialProposal: Proposal = {
+  id: '',
+  client_id: '',
+  title: '',
+  content: '',
+  ai_generated: false,
+  status: 'draft',
+};
 
 const ProposalManager = () => {
-  const [editingProposal, setEditingProposal] = useState<Proposal | null>(null);
-  const [viewingProposal, setViewingProposal] = useState<Proposal | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedClient, setSelectedClient] = useState<string>('all');
+  const [editMode, setEditMode] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
+  const [currentProposal, setCurrentProposal] = useState<Proposal>(initialProposal);
+  const [viewProposal, setViewProposal] = useState<Proposal | null>(null);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch proposals from the database
-  const { data: proposals = [], isLoading: isLoadingProposals, error: proposalsError } = useQuery({
+  // Fetch proposals
+  const { data: proposals = [], isLoading: isLoadingProposals } = useQuery({
     queryKey: ['proposals'],
     queryFn: fetchProposals
   });
 
-  // Fetch clients for the dropdown
-  const { data: clients = [] } = useQuery({
+  // Fetch clients
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
     queryKey: ['clients'],
     queryFn: fetchClients
   });
 
-  // Create proposal mutation
+  // Mutations
   const createMutation = useMutation({
     mutationFn: createProposal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      toast({
-        title: "Proposal Created",
-        description: "The proposal has been created successfully"
-      });
-      setEditingProposal(null);
-      setIsAdding(false);
+      toast({ title: "Success", description: "Proposal created successfully" });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
 
-  // Update proposal mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Proposal> }) => 
+    mutationFn: ({ id, updates }: { id: string, updates: Partial<Proposal> }) =>
       updateProposal(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      toast({
-        title: "Proposal Updated",
-        description: "The proposal has been updated successfully"
-      });
-      setEditingProposal(null);
+      toast({ title: "Success", description: "Proposal updated successfully" });
+      resetForm();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
 
-  // Delete proposal mutation
   const deleteMutation = useMutation({
     mutationFn: deleteProposal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      toast({
-        title: "Proposal Deleted",
-        description: "The proposal has been deleted successfully"
-      });
+      toast({ title: "Success", description: "Proposal deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
 
-  // AI Generate proposal mutation
   const generateAIMutation = useMutation({
-    mutationFn: (params: AIProposalParams) => generateProposalWithAI(
-      params.clientId,
-      params.title,
-      params.details
-    ),
+    mutationFn: ({ clientId, prompt }: { clientId: string, prompt: string }) =>
+      generateProposalWithAI(clientId, prompt),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
-      if (data) {
-        toast({
-          title: "Proposal Generated",
-          description: "AI has generated a proposal draft"
-        });
-        setViewingProposal(data);
-      }
-      setIsGeneratingAI(false);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to generate AI proposal",
-        variant: "destructive"
+      setCurrentProposal({
+        id: '',
+        title: data.title,
+        content: data.content,
+        client_id: data.client_id,
+        ai_generated: true,
+        status: 'draft'
       });
-      setIsGeneratingAI(false);
+      setEditMode(true);
+      setShowAIGenerator(false);
+      toast({ title: "Success", description: "AI proposal generated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
+
+  const resetForm = () => {
+    setCurrentProposal(initialProposal);
+    setEditMode(false);
+    setViewProposal(null);
+  };
 
   const handleEdit = (proposal: Proposal) => {
-    setViewingProposal(null);
-    setEditingProposal({ ...proposal });
-    setIsAdding(false);
+    setCurrentProposal(proposal);
+    setEditMode(true);
+    setViewProposal(null);
   };
 
   const handleView = (proposal: Proposal) => {
-    setEditingProposal(null);
-    setViewingProposal({ ...proposal });
-  };
-
-  const handleAdd = () => {
-    setViewingProposal(null);
-    const newProposal: Proposal = {
-      id: "",
-      client_id: "",
-      title: "",
-      content: "",
-      ai_generated: false,
-      status: "draft"
-    };
-    setEditingProposal(newProposal);
-    setIsAdding(true);
-  };
-
-  const handleCreateWithAI = () => {
-    setViewingProposal(null);
-    setEditingProposal(null);
-    setIsGeneratingAI(true);
-  };
-
-  const handleCloseAIGenerator = () => {
-    setIsGeneratingAI(false);
-  };
-
-  const handleSave = () => {
-    if (!editingProposal) return;
-    
-    if (isAdding) {
-      // For new proposals, we don't include the id
-      const { id, ...proposalData } = editingProposal;
-      createMutation.mutate(proposalData as Omit<Proposal, 'id'>);
-    } else {
-      updateMutation.mutate({ 
-        id: editingProposal.id, 
-        updates: editingProposal 
-      });
-    }
-  };
-
-  const handleCancel = () => {
-    setEditingProposal(null);
-    setIsAdding(false);
-  };
-
-  const handleCloseView = () => {
-    setViewingProposal(null);
+    setViewProposal(proposal);
+    setEditMode(false);
   };
 
   const handleDelete = (id: string) => {
-    const proposalToDelete = proposals.find(p => p.id === id);
-    if (confirm(`Are you sure you want to delete proposal "${proposalToDelete?.title}"?`)) {
+    if (window.confirm("Are you sure you want to delete this proposal?")) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleSubmitAIGenerator = (
-    clientId: string, 
-    title: string, 
-    details: { 
-      clientInfo: Client, 
-      projectScope: string, 
-      budget: string, 
-      timeline: string, 
-      requirements: string[] 
-    }
-  ) => {
-    generateAIMutation.mutate({
-      clientId,
-      title,
-      details
-    });
-  };
-
-  const handleStatusChange = (proposal: Proposal, newStatus: "draft" | "sent" | "accepted" | "rejected") => {
-    updateMutation.mutate({
-      id: proposal.id,
-      updates: { status: newStatus }
-    });
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case "draft": return "bg-gray-500/20 text-gray-300";
-      case "sent": return "bg-blue-500/20 text-blue-300";
-      case "accepted": return "bg-green-500/20 text-green-300";
-      case "rejected": return "bg-red-500/20 text-red-300";
-      default: return "bg-gray-500/20 text-gray-300";
+  const handleSave = (proposal: Proposal) => {
+    if (proposal.id) {
+      updateMutation.mutate({ id: proposal.id, updates: proposal });
+    } else {
+      createMutation.mutate(proposal);
     }
   };
 
+  const handleStatusChange = (id: string, status: string) => {
+    updateMutation.mutate({ id, updates: { status } });
+  };
+
+  const handleGenerateAI = (clientId: string, prompt: string) => {
+    generateAIMutation.mutate({ clientId, prompt });
+  };
+
+  // Filter proposals based on search query, status, and client
+  const filteredProposals = proposals.filter(proposal => {
+    const matchesSearch = proposal.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = selectedStatus === 'all' || proposal.status === selectedStatus;
+    const matchesClient = selectedClient === 'all' || proposal.client_id === selectedClient;
+    return matchesSearch && matchesStatus && matchesClient;
+  });
+
+  // Find client name by ID
   const getClientName = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Unknown Client';
   };
 
-  if (isLoadingProposals) {
-    return (
-      <div className="flex justify-center py-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
-      </div>
-    );
-  }
-
-  if (proposalsError) {
-    return (
-      <div className="text-red-500 p-4">
-        Error loading proposals. Please try again later.
-        {proposalsError instanceof Error && <div className="text-sm mt-2">{proposalsError.message}</div>}
-      </div>
-    );
-  }
-
-  // If we're viewing a proposal, show that instead
-  if (viewingProposal) {
-    return (
-      <ProposalView 
-        proposal={viewingProposal} 
-        client={clients.find(c => c.id === viewingProposal.client_id)} 
-        onClose={handleCloseView}
-        onEdit={() => handleEdit(viewingProposal)}
-        onStatusChange={(status) => handleStatusChange(viewingProposal, status)}
-      />
-    );
-  }
-
-  // If we're generating an AI proposal, show the generator
-  if (isGeneratingAI) {
-    return (
-      <AIProposalGenerator 
-        clients={clients}
-        onSubmit={handleSubmitAIGenerator}
-        onCancel={handleCloseAIGenerator}
-        isGenerating={generateAIMutation.isPending}
-      />
-    );
-  }
+  const statusColors = {
+    draft: "bg-gray-500",
+    sent: "bg-blue-500",
+    accepted: "bg-green-500",
+    rejected: "bg-red-500"
+  };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Proposal Management</h1>
-          <p className="text-gray-400">Create and manage client proposals</p>
-        </div>
-        <div className="flex space-x-2">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-white">Proposal Management</h1>
+        <div className="flex gap-2">
           <Button 
-            onClick={handleCreateWithAI}
-            variant="outline"
-            className="border-agency-purple text-agency-purple hover:bg-agency-purple/10"
+            onClick={() => { setShowAIGenerator(true); setEditMode(false); setViewProposal(null); }}
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
           >
-            <Sparkles size={16} className="mr-2" />
-            AI Generate
+            <Bot size={16} className="mr-2" />
+            AI Generator
           </Button>
           <Button 
-            onClick={handleAdd}
+            onClick={() => { setEditMode(true); setCurrentProposal(initialProposal); setViewProposal(null); setShowAIGenerator(false); }}
             className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
           >
             <Plus size={16} className="mr-2" />
-            Add Proposal
+            New Proposal
           </Button>
         </div>
       </div>
 
-      {editingProposal ? (
-        <Card className="glass-card p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {isAdding ? "Create New Proposal" : "Edit Proposal"}
-          </h2>
-          
-          <ProposalForm
-            proposal={editingProposal}
-            clients={clients}
-            onChange={setEditingProposal}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            isSaving={createMutation.isPending || updateMutation.isPending}
+      {showAIGenerator ? (
+        <Card className="glass-card p-6 mb-6">
+          <h2 className="text-xl font-bold text-white mb-4">Generate Proposal with AI</h2>
+          <AIProposalGenerator 
+            clients={clients} 
+            onGenerate={handleGenerateAI} 
+            onCancel={() => setShowAIGenerator(false)}
+            isLoading={generateAIMutation.isPending}
           />
         </Card>
       ) : null}
 
-      <Card className="glass-card p-4 overflow-hidden">
-        <div className="rounded-md border border-white/10 overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-white/5 border-white/10">
-                <TableHead className="text-white">Proposal</TableHead>
-                <TableHead className="text-white">Client</TableHead>
-                <TableHead className="text-white">Created</TableHead>
-                <TableHead className="text-white">Status</TableHead>
-                <TableHead className="text-white text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {proposals.map(proposal => (
-                <TableRow key={proposal.id} className="hover:bg-white/5 border-white/10">
-                  <TableCell>
-                    <div>
-                      <div className="font-medium text-white">
-                        {proposal.title}
-                        {proposal.ai_generated && (
-                          <span className="ml-2 text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
-                            AI Generated
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {getClientName(proposal.client_id)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm text-gray-400 flex items-center">
-                      <Calendar size={12} className="mr-1" />
-                      {proposal.created_at ? format(new Date(proposal.created_at), 'MMM d, yyyy') : 'Unknown'}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${getStatusBadgeColor(proposal.status)}`}>
-                      {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleView(proposal)}
-                        title="View Proposal"
-                      >
-                        <FileText size={16} />
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit(proposal)}
-                        title="Edit Proposal"
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      
-                      {proposal.status === 'draft' && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleStatusChange(proposal, 'sent')}
-                          className="text-blue-400 hover:text-blue-300"
-                          title="Mark as Sent"
-                        >
-                          <Send size={16} />
-                        </Button>
-                      )}
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDelete(proposal.id)}
-                        className="text-red-400 hover:text-red-300"
-                        title="Delete Proposal"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              
-              {proposals.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    No proposals found. Click "Add Proposal" to create one or use "AI Generate" for quick drafts.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+      {editMode ? (
+        <Card className="glass-card p-6 mb-6">
+          <h2 className="text-xl font-bold text-white mb-4">
+            {currentProposal.id ? "Edit Proposal" : "Create New Proposal"}
+          </h2>
+          <ProposalForm 
+            proposal={currentProposal}
+            clients={clients}
+            onSave={handleSave}
+            onCancel={resetForm}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </Card>
+      ) : null}
+
+      {viewProposal ? (
+        <Card className="glass-card p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-white">Viewing Proposal</h2>
+            <Button variant="outline" onClick={() => setViewProposal(null)}>
+              <X size={16} className="mr-2" />
+              Close
+            </Button>
+          </div>
+          <ProposalView proposal={viewProposal} clientName={getClientName(viewProposal.client_id)} />
+        </Card>
+      ) : null}
+
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Search proposals..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-agency-darker border-white/10 text-white"
+          />
         </div>
-      </Card>
+        <div className="w-full md:w-48">
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="bg-agency-darker border-white/10 text-white">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent className="bg-agency-darker border-white/10 text-white">
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full md:w-64">
+          <Select value={selectedClient} onValueChange={setSelectedClient}>
+            <SelectTrigger className="bg-agency-darker border-white/10 text-white">
+              <SelectValue placeholder="Filter by client" />
+            </SelectTrigger>
+            <SelectContent className="bg-agency-darker border-white/10 text-white">
+              <SelectItem value="all">All Clients</SelectItem>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {isLoadingProposals || isLoadingClients ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredProposals.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              No proposals found. Create your first proposal.
+            </div>
+          ) : (
+            filteredProposals.map(proposal => (
+              <Card key={proposal.id} className="glass-card p-4 overflow-hidden">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className={`${statusColors[proposal.status as keyof typeof statusColors] || "bg-gray-500"} 
+                          w-3 h-3 rounded-full`}
+                      />
+                      <h3 className="text-lg font-semibold text-white">{proposal.title}</h3>
+                    </div>
+                    <p className="text-sm text-gray-400">Client: {getClientName(proposal.client_id)}</p>
+                    {proposal.ai_generated && (
+                      <span className="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded-full">
+                        AI Generated
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
+                    <Select 
+                      defaultValue={proposal.status}
+                      onValueChange={(value) => handleStatusChange(proposal.id, value)}
+                    >
+                      <SelectTrigger className="h-8 text-sm bg-agency-darker border-white/10 text-white w-32">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-agency-darker border-white/10 text-white">
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="sent">Sent</SelectItem>
+                        <SelectItem value="accepted">Accepted</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleView(proposal)}
+                      className="border-white/10"
+                    >
+                      View
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={() => handleEdit(proposal)}
+                      className="border-white/10 h-8 w-8"
+                    >
+                      <Edit size={14} />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={() => handleDelete(proposal.id)}
+                      className="border-white/10 text-red-500 hover:text-red-400 h-8 w-8"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

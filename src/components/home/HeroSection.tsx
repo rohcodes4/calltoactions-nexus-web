@@ -26,6 +26,18 @@ const HeroSection = () => {
     navigate('/contact');
   };
 
+  const scrollToNextSection = () => {
+    const nextSection = document.getElementById('client-logos');
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({
+        top: window.innerHeight,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
       <ThreeScene />
@@ -39,7 +51,7 @@ const HeroSection = () => {
         <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-10">
           Transforming visions into captivating digital realities. Your brand deserves a powerful online presence that drives real results.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 mb-16">
           <Button 
             size="lg" 
             className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
@@ -57,15 +69,17 @@ const HeroSection = () => {
           </Button>
         </div>
         
-        <a 
-          href="#services" 
-          className={`absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-white/60 hover:text-white transition-all duration-300 ${
-            scrolled ? 'opacity-0' : 'opacity-100'
-          }`}
-        >
-          <span className="text-sm mb-2">Discover More</span>
-          <ArrowDown className="animate-bounce" size={20} />
-        </a>
+        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+          <button 
+            onClick={scrollToNextSection}
+            className={`flex flex-col items-center text-white/60 hover:text-white transition-all duration-300 ${
+              scrolled ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
+            <span className="text-sm mb-2">Discover More</span>
+            <ArrowDown className="animate-bounce" size={20} />
+          </button>
+        </div>
       </div>
     </section>
   );
