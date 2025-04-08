@@ -1,132 +1,188 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import PortfolioItem from '@/components/PortfolioItem';
 import ContactForm from '@/components/ContactForm';
-
-// Sample portfolio data
-const portfolioItems = [
-  {
-    id: "1",
-    title: "Elegance Rebranding",
-    category: "Graphic Design",
-    imageUrl: "https://images.unsplash.com/photo-1600508774634-4e11d34730e2?q=80&w=800&auto=format&fit=crop",
-    description: "Complete rebranding project for a luxury brand, including logo design, color palette, and brand guidelines.",
-    link: "",
-  },
-  {
-    id: "2",
-    title: "Tech Innovators Website",
-    category: "Web Development",
-    imageUrl: "https://images.unsplash.com/photo-1547658719-da2b51169166?q=80&w=800&auto=format&fit=crop",
-    description: "Fully responsive website design and development for a tech startup, with custom animations and interactive elements.",
-    link: "",
-  },
-  {
-    id: "3",
-    title: "Urban Beats Campaign",
-    category: "Digital Marketing",
-    imageUrl: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?q=80&w=800&auto=format&fit=crop",
-    description: "Comprehensive marketing campaign for a music festival, including social media strategy, content creation, and analytics.",
-    link: "",
-  },
-  {
-    id: "4",
-    title: "Nature Documentary",
-    category: "Video Production",
-    imageUrl: "https://images.unsplash.com/photo-1585023523356-6307e708055b?q=80&w=800&auto=format&fit=crop",
-    description: "Award-winning short documentary about environmental conservation, featuring stunning cinematography and compelling storytelling.",
-    link: "",
-  },
-  {
-    id: "5",
-    title: "Fusion Restaurant Menu",
-    category: "Graphic Design",
-    imageUrl: "https://images.unsplash.com/photo-1583316174775-bd6dc0e9f298?q=80&w=800&auto=format&fit=crop",
-    description: "Custom menu design for a high-end fusion restaurant, including digital and print versions with innovative layout and typography.",
-    link: "",
-  },
-  {
-    id: "6",
-    title: "Eco-Friendly E-commerce",
-    category: "Web Development",
-    imageUrl: "https://images.unsplash.com/photo-1601972599720-36938d4ecd31?q=80&w=800&auto=format&fit=crop",
-    description: "Full e-commerce platform development for a sustainable products brand, with custom checkout process and integration with inventory management.",
-    link: "",
-  },
-];
+import { fetchPortfolio } from '@/services/databaseService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Portfolio as PortfolioType } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Portfolio = () => {
-  const categories = ["All", ...new Set(portfolioItems.map(item => item.category))];
-  const [activeCategory, setActiveCategory] = useState("All");
+  const { toast } = useToast();
   
-  const filteredItems = activeCategory === "All" 
-    ? portfolioItems 
-    : portfolioItems.filter(item => item.category === activeCategory);
+  // Fetch portfolio data
+  const { data: portfolioItems = [], isLoading, error } = useQuery({
+    queryKey: ['portfolio'],
+    queryFn: fetchPortfolio
+  });
+  
+  const [filteredItems, setFilteredItems] = useState<PortfolioType[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Extract categories from portfolio items
+  useEffect(() => {
+    if (portfolioItems.length > 0) {
+      const uniqueCategories = ['All', ...new Set(portfolioItems.map(item => item.category))];
+      setCategories(uniqueCategories);
+      setFilteredItems(portfolioItems);
+    }
+  }, [portfolioItems]);
+  
+  // Filter items when category changes
+  const handleCategoryChange = (category: string) => {
+    setIsAnimating(true);
+    setActiveCategory(category);
+    
+    setTimeout(() => {
+      if (category === "All") {
+        setFilteredItems(portfolioItems);
+      } else {
+        setFilteredItems(portfolioItems.filter(item => item.category === category));
+      }
+      setIsAnimating(false);
+    }, 300);
+  };
+  
+  // Display error if fetching fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading portfolio",
+        description: "Could not load portfolio items. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
 
   return (
     <div className="flex flex-col min-h-screen bg-agency-dark pt-20">
       {/* Hero Section */}
-      <section className="py-20 bg-agency-darker">
+      <motion.section 
+        className="py-20 bg-agency-darker"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <motion.h1 
+              className="text-4xl md:text-5xl font-bold text-white mb-6"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               Our <span className="text-gradient">Portfolio</span>
-            </h1>
-            <p className="text-lg text-gray-300 mb-8">
+            </motion.h1>
+            <motion.p 
+              className="text-lg text-gray-300 mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
               Explore our latest work and see how we've helped brands achieve their goals through innovative digital solutions.
-            </p>
+            </motion.p>
           </div>
         </div>
-      </section>
+      </motion.section>
       
       {/* Filter Navigation */}
       <section className="py-8 bg-agency-dark sticky top-20 z-10 border-b border-white/5 backdrop-blur-lg">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-4">
+          <motion.div 
+            className="flex flex-wrap justify-center gap-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.4 }}
+          >
             {categories.map((category) => (
               <Button
                 key={category}
                 variant={activeCategory === category ? "default" : "outline"}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => handleCategoryChange(category)}
                 className={`
                   ${activeCategory === category 
-                    ? 'bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple' 
+                    ? 'bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple shadow-lg shadow-agency-purple/20' 
                     : 'border-white/10 text-gray-300 hover:bg-white/5 hover:text-white'
                   }
+                  transition-all duration-300
                 `}
               >
                 {category}
               </Button>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
       
       {/* Portfolio Grid */}
       <section className="py-16 bg-agency-dark">
         <div className="container mx-auto px-4">
-          {filteredItems.length > 0 ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredItems.map((item) => (
-                <PortfolioItem key={item.id} {...item} />
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="glass-card rounded-lg overflow-hidden">
+                  <Skeleton className="h-48 w-full" />
+                  <div className="p-6">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-4" />
+                    <Skeleton className="h-10 w-1/3" />
+                  </div>
+                </div>
               ))}
             </div>
+          ) : filteredItems.length > 0 ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              >
+                {filteredItems.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <PortfolioItem {...item} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
           ) : (
-            <div className="text-center py-20">
+            <motion.div 
+              className="text-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+            >
               <h3 className="text-2xl font-bold text-white mb-4">No projects found</h3>
               <p className="text-gray-400">
                 No projects match the selected category. Please try another filter.
               </p>
-            </div>
+            </motion.div>
           )}
         </div>
       </section>
       
       {/* Call to Action */}
-      <section className="py-20 bg-agency-darker">
+      <motion.section 
+        className="py-20 bg-agency-darker"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto glass-card p-8 md:p-12">
+          <div className="max-w-3xl mx-auto glass-card p-8 md:p-12 border border-white/5 shadow-xl shadow-purple-900/10">
             <div className="mb-8 text-center">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                 Ready to <span className="text-gradient">Start Your Project?</span>
@@ -138,7 +194,7 @@ const Portfolio = () => {
             <ContactForm />
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 };

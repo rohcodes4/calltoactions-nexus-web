@@ -172,13 +172,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "invoices_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "invoices_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -186,6 +179,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      newsletter_subscriptions: {
+        Row: {
+          email: string
+          id: string
+          last_updated: string | null
+          name: string | null
+          status: string
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          last_updated?: string | null
+          name?: string | null
+          status?: string
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          last_updated?: string | null
+          name?: string | null
+          status?: string
+          subscribed_at?: string
+        }
+        Relationships: []
       }
       portfolio: {
         Row: {
