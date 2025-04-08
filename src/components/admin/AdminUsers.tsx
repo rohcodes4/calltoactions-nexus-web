@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,14 +23,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { supabase } from '@/lib/supabase';
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const AdminUsers = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Check current user's role
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          setCurrentUserRole(data.role);
+        }
+      }
+    };
+    
+    checkUserRole();
+  }, []);
 
   // Fetch users
   const { data: users = [], isLoading, error } = useQuery({
@@ -104,6 +127,8 @@ const AdminUsers = () => {
     }
   };
 
+  const isAdmin = currentUserRole === 'admin';
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -130,17 +155,19 @@ const AdminUsers = () => {
         </div>
       </div>
       
-      <Card className="glass-card p-6 mb-6">
-        <div className="flex items-center space-x-2 text-amber-400 bg-amber-500/10 p-4 rounded-lg">
-          <AlertOctagon size={24} />
-          <div>
-            <p className="font-medium">Admin Privileges Required</p>
-            <p className="text-sm text-amber-300">
-              Creating and deleting users requires admin privileges. Contact your Supabase administrator for full access.
-            </p>
+      {!isAdmin && (
+        <Card className="glass-card p-6 mb-6">
+          <div className="flex items-center space-x-2 text-amber-400 bg-amber-500/10 p-4 rounded-lg">
+            <AlertOctagon size={24} />
+            <div>
+              <p className="font-medium">Admin Privileges Required</p>
+              <p className="text-sm text-amber-300">
+                Creating and deleting users requires admin privileges. Contact your Supabase administrator for full access.
+              </p>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {isEditing && currentUser && (
         <Card className="glass-card p-6 mb-8">
@@ -182,11 +209,15 @@ const AdminUsers = () => {
                   value={currentUser.role}
                   onChange={handleInputChange}
                   className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  disabled={!isAdmin}
                 >
                   <option value="admin">Admin</option>
                   <option value="editor">Editor</option>
                   <option value="viewer">Viewer</option>
                 </select>
+                {!isAdmin && (
+                  <p className="text-xs text-amber-400 mt-1">Only admins can change roles</p>
+                )}
               </div>
               
               <div>
@@ -196,10 +227,14 @@ const AdminUsers = () => {
                   value={currentUser.status}
                   onChange={handleInputChange}
                   className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  disabled={!isAdmin}
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+                {!isAdmin && (
+                  <p className="text-xs text-amber-400 mt-1">Only admins can change status</p>
+                )}
               </div>
             </div>
             
@@ -218,7 +253,7 @@ const AdminUsers = () => {
               <Button 
                 type="submit"
                 className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-                disabled={updateMutation.isPending}
+                disabled={updateMutation.isPending || (!isAdmin && (currentUser.role !== 'editor' || currentUser.status !== 'active'))}
               >
                 {updateMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
@@ -280,14 +315,16 @@ const AdminUsers = () => {
                         <Edit size={16} />
                       </Button>
                       
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeleteClick(user)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      {isAdmin && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteClick(user)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
