@@ -501,6 +501,53 @@ export const deleteNewsletterSubscription = async (id: string): Promise<boolean>
   return true;
 };
 
+export const deleteUser = async (id: string): Promise<boolean> => {
+  console.log('Deleting user:', id);
+  
+  // First delete user from users table (our custom table)
+  const { error: profileError } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', id);
+  
+  if (profileError) {
+    console.error('Error deleting user profile:', profileError);
+    toast({
+      title: 'Error',
+      description: `Failed to delete user profile: ${profileError.message}`,
+      variant: 'destructive',
+    });
+    return false;
+  }
+  
+  // Note: Deleting from auth.users would require admin privileges
+  // We'll inform the user about this limitation in the UI
+  
+  toast({
+    title: 'Success',
+    description: 'User deleted successfully',
+  });
+  
+  return true;
+};
+
+export const exportNewsletterSubscriptions = async (): Promise<string> => {
+  const subscriptions = await fetchNewsletterSubscriptions();
+  
+  // Create CSV content
+  const headers = ['Email', 'Name', 'Subscription Date', 'Status'];
+  const csvRows = [
+    headers.join(','),
+    ...subscriptions.map(sub => {
+      const date = sub.subscribed_at ? new Date(sub.subscribed_at).toLocaleDateString() : 'N/A';
+      const name = sub.name || 'N/A';
+      return `"${sub.email}","${name}","${date}","${sub.status}"`;
+    })
+  ];
+  
+  return csvRows.join('\n');
+};
+
 // ------------------- USERS -------------------
 export const fetchUsers = async (): Promise<User[]> => {
   const { data, error } = await supabase
@@ -815,7 +862,11 @@ export const deleteProject = async (id: string): Promise<boolean> => {
 export const fetchInvoices = async (): Promise<Invoice[]> => {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*, clients(name), projects(title)')
+    .select(`
+      *,
+      clients:client_id (name),
+      projects:project_id (title)
+    `)
     .order('created_at', { ascending: false });
   
   if (error) {

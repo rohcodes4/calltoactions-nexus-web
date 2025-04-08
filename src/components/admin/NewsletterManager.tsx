@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Edit, Trash2, Check, X, Download, Cog } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { NewsletterSubscription } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,13 +20,16 @@ import {
   fetchNewsletterSubscriptions, 
   createNewsletterSubscription, 
   updateNewsletterSubscription, 
-  deleteNewsletterSubscription 
+  deleteNewsletterSubscription,
+  exportNewsletterSubscriptions 
 } from '@/services/databaseService';
+import EmailIntegration from './EmailIntegration';
 
 const NewsletterManager = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<NewsletterSubscription | null>(null);
+  const [activeTab, setActiveTab] = useState('subscribers');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -133,6 +137,44 @@ const NewsletterManager = () => {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const csvData = await exportNewsletterSubscriptions();
+      
+      // Create a blob and download it
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `newsletter-subscribers-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: "Newsletter subscribers exported successfully"
+      });
+    } catch (error) {
+      console.error('Error exporting subscribers:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export newsletter subscribers",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEmailIntegrationConnect = (provider: string, apiKey: string) => {
+    console.log(`Connected to ${provider} with API key: ${apiKey}`);
+    // In a production app, you would store this connection in the database
+    toast({
+      title: "Integration Connected",
+      description: `Your newsletter is now connected to ${provider}`
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-10">
@@ -157,155 +199,188 @@ const NewsletterManager = () => {
           <h1 className="text-2xl font-bold text-white">Newsletter Subscriptions</h1>
           <p className="text-gray-400">Manage your newsletter subscribers</p>
         </div>
-        <Button 
-          onClick={handleAddClick}
-          className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Subscriber
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={handleExportCSV}
+            variant="outline"
+            className="text-white"
+          >
+            <Download size={16} className="mr-2" />
+            Export CSV
+          </Button>
+          
+          <Button 
+            onClick={handleAddClick}
+            className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+          >
+            <Plus size={16} className="mr-2" />
+            Add Subscriber
+          </Button>
+        </div>
       </div>
 
-      {(isAdding || isEditing) && currentSubscription && (
-        <Card className="glass-card p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {isAdding ? "Add New Subscriber" : "Edit Subscriber"}
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-300 block mb-1">Email*</label>
-                <input 
-                  type="email" 
-                  name="email"
-                  value={currentSubscription.email || ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                  placeholder="email@example.com"
-                  required
-                />
-              </div>
+      <Tabs
+        defaultValue="subscribers"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="mb-6"
+      >
+        <TabsList className="bg-white/10 border border-white/20">
+          <TabsTrigger value="subscribers" className="data-[state=active]:bg-white/20">
+            Subscribers
+          </TabsTrigger>
+          <TabsTrigger value="integration" className="data-[state=active]:bg-white/20">
+            Email Integration
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="subscribers" className="mt-6">
+          {(isAdding || isEditing) && currentSubscription && (
+            <Card className="glass-card p-6 mb-8">
+              <h2 className="text-xl font-bold text-white mb-4">
+                {isAdding ? "Add New Subscriber" : "Edit Subscriber"}
+              </h2>
               
-              <div>
-                <label className="text-sm text-gray-300 block mb-1">Name</label>
-                <input 
-                  type="text" 
-                  name="name"
-                  value={currentSubscription.name || ''}
-                  onChange={handleInputChange}
-                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                  placeholder="John Doe"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Status</label>
-              <select 
-                name="status"
-                value={currentSubscription.status}
-                onChange={handleInputChange}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-              >
-                <option value="active">Active</option>
-                <option value="unsubscribed">Unsubscribed</option>
-              </select>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button 
-                type="button"
-                variant="outline" 
-                onClick={resetForm}
-              >
-                Cancel
-              </Button>
-              
-              <Button 
-                type="submit"
-                className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {(createMutation.isPending || updateMutation.isPending) ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                ) : (
-                  <Check size={16} className="mr-2" />
-                )}
-                {isAdding ? "Add Subscriber" : "Update Subscriber"}
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-300 block mb-1">Email*</label>
+                    <input 
+                      type="email" 
+                      name="email"
+                      value={currentSubscription.email || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                      placeholder="email@example.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm text-gray-300 block mb-1">Name</label>
+                    <input 
+                      type="text" 
+                      name="name"
+                      value={currentSubscription.name || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm text-gray-300 block mb-1">Status</label>
+                  <select 
+                    name="status"
+                    value={currentSubscription.status}
+                    onChange={handleInputChange}
+                    className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  >
+                    <option value="active">Active</option>
+                    <option value="unsubscribed">Unsubscribed</option>
+                  </select>
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={resetForm}
+                  >
+                    Cancel
+                  </Button>
+                  
+                  <Button 
+                    type="submit"
+                    className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                  >
+                    {(createMutation.isPending || updateMutation.isPending) ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Check size={16} className="mr-2" />
+                    )}
+                    {isAdding ? "Add Subscriber" : "Update Subscriber"}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          )}
 
-      <Card className="glass-card p-4 overflow-hidden">
-        <div className="rounded-md border border-white/10 overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="hover:bg-white/5 border-white/10">
-                <TableHead className="text-white w-1/3">Email</TableHead>
-                <TableHead className="text-white">Name</TableHead>
-                <TableHead className="text-white">Date</TableHead>
-                <TableHead className="text-white">Status</TableHead>
-                <TableHead className="text-white text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {subscriptions.map(subscription => (
-                <TableRow key={subscription.id} className="hover:bg-white/5 border-white/10">
-                  <TableCell className="font-medium text-white">
-                    {subscription.email}
-                  </TableCell>
-                  <TableCell>
-                    {subscription.name || '-'}
-                  </TableCell>
-                  <TableCell>
-                    {subscription.subscribed_at ? format(new Date(subscription.subscribed_at), 'MMM d, yyyy') : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      subscription.status === 'active' 
-                        ? 'bg-green-500/20 text-green-300' 
-                        : 'bg-red-500/20 text-red-300'
-                    }`}>
-                      {subscription.status === 'active' ? 'Active' : 'Unsubscribed'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end space-x-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEditClick(subscription)}
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeleteClick(subscription.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              
-              {subscriptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    No subscriptions found. Click "Add Subscriber" to create one.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+          <Card className="glass-card p-4 overflow-hidden">
+            <div className="rounded-md border border-white/10 overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-white/5">
+                  <TableRow className="hover:bg-white/5 border-white/10">
+                    <TableHead className="text-white w-1/3">Email</TableHead>
+                    <TableHead className="text-white">Name</TableHead>
+                    <TableHead className="text-white">Date</TableHead>
+                    <TableHead className="text-white">Status</TableHead>
+                    <TableHead className="text-white text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptions.map(subscription => (
+                    <TableRow key={subscription.id} className="hover:bg-white/5 border-white/10">
+                      <TableCell className="font-medium text-white">
+                        {subscription.email}
+                      </TableCell>
+                      <TableCell>
+                        {subscription.name || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {subscription.subscribed_at ? format(new Date(subscription.subscribed_at), 'MMM d, yyyy') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          subscription.status === 'active' 
+                            ? 'bg-green-500/20 text-green-300' 
+                            : 'bg-red-500/20 text-red-300'
+                        }`}>
+                          {subscription.status === 'active' ? 'Active' : 'Unsubscribed'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditClick(subscription)}
+                          >
+                            <Edit size={16} />
+                          </Button>
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteClick(subscription.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  
+                  {subscriptions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                        No subscriptions found. Click "Add Subscriber" to create one.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="integration" className="mt-6">
+          <EmailIntegration onConnect={handleEmailIntegrationConnect} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

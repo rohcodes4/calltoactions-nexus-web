@@ -1,67 +1,46 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Save, X, User, UserCheck, UserX, MailOpen } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { User as UserType } from '@/lib/supabase';
-import { fetchUsers, createUser, updateUser } from '@/services/databaseService';
-import { z } from 'zod';
+import { User } from '@/lib/supabase';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { fetchUsers, updateUser, deleteUser } from '@/services/databaseService';
+import { Edit, Trash2, AlertOctagon } from 'lucide-react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-// Validation schema
-const userSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  full_name: z.string().min(1, "Full name is required"),
-  role: z.enum(["admin", "editor", "viewer"]),
-  status: z.enum(["active", "inactive"])
-});
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AdminUsers = () => {
-  const [editingUser, setEditingUser] = useState<UserType | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch users from the database
+  // Fetch users
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
     queryFn: fetchUsers
   });
 
-  // Create user mutation
-  const createMutation = useMutation({
-    mutationFn: createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({
-        title: "User Created",
-        description: "The user has been created successfully"
-      });
-      setEditingUser(null);
-      setIsAdding(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create user",
-        variant: "destructive"
-      });
-    }
-  });
-
   // Update user mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<UserType> }) => 
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<User> }) => 
       updateUser(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -69,100 +48,59 @@ const AdminUsers = () => {
         title: "User Updated",
         description: "The user has been updated successfully"
       });
-      setEditingUser(null);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update user",
-        variant: "destructive"
-      });
+      setIsEditing(false);
+      setCurrentUser(null);
     }
   });
 
-  const handleEdit = (user: UserType) => {
-    setEditingUser({ ...user });
-    setIsAdding(false);
-  };
-
-  const handleAdd = () => {
-    const newUser: UserType = {
-      id: "",
-      email: "",
-      full_name: "",
-      role: "viewer",
-      status: "inactive"
-    };
-    setEditingUser(newUser);
-    setIsAdding(true);
-  };
-
-  const validateForm = () => {
-    if (!editingUser) return false;
-    
-    try {
-      userSchema.parse({
-        email: editingUser.email,
-        full_name: editingUser.full_name || "",
-        role: editingUser.role,
-        status: editingUser.status
+  // Delete user mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "User Deleted",
+        description: "The user has been deleted successfully"
       });
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.map(e => e.message).join(', ');
-        toast({
-          title: "Validation Error",
-          description: errorMessages,
-          variant: "destructive"
-        });
-      }
-      return false;
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     }
+  });
+
+  const handleEditClick = (user: User) => {
+    setCurrentUser({ ...user });
+    setIsEditing(true);
   };
 
-  const handleSave = () => {
-    if (!editingUser || !validateForm()) return;
-    
-    if (isAdding) {
-      // For new users, we don't include the id
-      const { id, ...userData } = editingUser;
-      createMutation.mutate(userData as UserType);
-    } else {
-      updateMutation.mutate({ 
-        id: editingUser.id, 
-        updates: editingUser 
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (currentUser) {
+      setCurrentUser({
+        ...currentUser,
+        [name]: value
       });
     }
   };
 
-  const handleCancel = () => {
-    setEditingUser(null);
-    setIsAdding(false);
-  };
-
-  const toggleStatus = (user: UserType) => {
-    const newStatus = user.status === "active" ? "inactive" : "active";
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentUser || !currentUser.id) return;
+    
     updateMutation.mutate({ 
-      id: user.id, 
-      updates: { status: newStatus }
+      id: currentUser.id, 
+      updates: currentUser 
     });
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case "admin": return "bg-red-500/20 text-red-300";
-      case "editor": return "bg-green-500/20 text-green-300";
-      case "viewer": return "bg-blue-500/20 text-blue-300";
-      default: return "bg-gray-500/20 text-gray-300";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "active": return <span className="text-green-400">Active</span>;
-      case "inactive": return <span className="text-gray-400">Inactive</span>;
-      default: return <span>{status}</span>;
+  const confirmDelete = () => {
+    if (userToDelete && userToDelete.id) {
+      deleteMutation.mutate(userToDelete.id);
     }
   };
 
@@ -188,163 +126,167 @@ const AdminUsers = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">User Management</h1>
-          <p className="text-gray-400">Add, edit, or manage user access to the admin panel</p>
+          <p className="text-gray-400">Manage users and their permissions</p>
         </div>
-        <Button 
-          onClick={handleAdd}
-          className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-        >
-          <Plus size={16} className="mr-2" />
-          Add User
-        </Button>
       </div>
+      
+      <Card className="glass-card p-6 mb-6">
+        <div className="flex items-center space-x-2 text-amber-400 bg-amber-500/10 p-4 rounded-lg">
+          <AlertOctagon size={24} />
+          <div>
+            <p className="font-medium">Admin Privileges Required</p>
+            <p className="text-sm text-amber-300">
+              Creating and deleting users requires admin privileges. Contact your Supabase administrator for full access.
+            </p>
+          </div>
+        </div>
+      </Card>
 
-      {editingUser ? (
+      {isEditing && currentUser && (
         <Card className="glass-card p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">
-            {isAdding ? "Add New User" : "Edit User"}
-          </h2>
+          <h2 className="text-xl font-bold text-white mb-4">Edit User</h2>
           
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Email</label>
-              <input 
-                type="email" 
-                value={editingUser.email}
-                onChange={e => setEditingUser({...editingUser, email: e.target.value})}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="user@example.com"
-                disabled={!isAdding} // Only allow email editing for new users
-              />
-              {!isAdding && (
-                <p className="text-xs text-amber-400 mt-1">Email cannot be changed after creation</p>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Email</label>
+                <input 
+                  type="email" 
+                  name="email"
+                  value={currentUser.email}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              </div>
+              
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  name="full_name"
+                  value={currentUser.full_name || ''}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                  placeholder="Full Name"
+                />
+              </div>
             </div>
             
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Full Name</label>
-              <input 
-                type="text" 
-                value={editingUser.full_name || ''}
-                onChange={e => setEditingUser({...editingUser, full_name: e.target.value})}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="Full Name"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Role</label>
+                <select 
+                  name="role"
+                  value={currentUser.role}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="editor">Editor</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-sm text-gray-300 block mb-1">Status</label>
+                <select 
+                  name="status"
+                  value={currentUser.status}
+                  onChange={handleInputChange}
+                  className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
             </div>
             
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Role</label>
-              <select 
-                value={editingUser.role}
-                onChange={e => setEditingUser({...editingUser, role: e.target.value as any})}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => {
+                  setIsEditing(false);
+                  setCurrentUser(null);
+                }}
               >
-                <option value="admin">Admin</option>
-                <option value="editor">Editor</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Admin: Full access to all features<br />
-                Editor: Can edit content but not manage users<br />
-                Viewer: Read-only access
-              </p>
-            </div>
-            
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Status</label>
-              <select 
-                value={editingUser.status}
-                onChange={e => setEditingUser({...editingUser, status: e.target.value as any})}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                Cancel
+              </Button>
+              
+              <Button 
+                type="submit"
+                className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                disabled={updateMutation.isPending}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                {updateMutation.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                ) : "Update User"}
+              </Button>
             </div>
-          </div>
-          
-          <div className="flex justify-end mt-6 space-x-2">
-            <Button 
-              variant="outline"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave}
-              className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {createMutation.isPending || updateMutation.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-              ) : (
-                <Save size={16} className="mr-2" />
-              )}
-              Save
-            </Button>
-          </div>
+          </form>
         </Card>
-      ) : null}
+      )}
 
       <Card className="glass-card p-4 overflow-hidden">
-        <div className="rounded-md border border-white/10 overflow-hidden">
+        <div className="rounded-md border border-white/10 overflow-x-auto">
           <Table>
             <TableHeader className="bg-white/5">
               <TableRow className="hover:bg-white/5 border-white/10">
-                <TableHead className="text-white">User</TableHead>
+                <TableHead className="text-white">Email</TableHead>
+                <TableHead className="text-white">Name</TableHead>
                 <TableHead className="text-white">Role</TableHead>
                 <TableHead className="text-white">Status</TableHead>
-                <TableHead className="text-white">Created</TableHead>
                 <TableHead className="text-white text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map(user => (
                 <TableRow key={user.id} className="hover:bg-white/5 border-white/10">
-                  <TableCell>
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-3">
-                        <User size={18} className="text-white" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-white">{user.full_name || 'Unnamed User'}</div>
-                        <div className="text-sm text-gray-400">
-                          <div className="flex items-center">
-                            <MailOpen size={12} className="mr-1" />
-                            {user.email}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <TableCell className="font-medium text-white">
+                    {user.email}
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${getRoleBadgeColor(user.role)}`}>
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    {user.full_name || '-'}
+                  </TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      user.role === 'admin' 
+                        ? 'bg-purple-500/20 text-purple-300' 
+                        : user.role === 'editor'
+                        ? 'bg-blue-500/20 text-blue-300'
+                        : 'bg-gray-500/20 text-gray-300'
+                    }`}>
+                      {user.role}
                     </span>
                   </TableCell>
                   <TableCell>
-                    {getStatusText(user.status)}
-                  </TableCell>
-                  <TableCell className="text-gray-400 text-sm">
-                    {user.created_at ? format(new Date(user.created_at), 'MMM d, yyyy') : 'Unknown'}
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      user.status === 'active' 
+                        ? 'bg-green-500/20 text-green-300' 
+                        : 'bg-red-500/20 text-red-300'
+                    }`}>
+                      {user.status}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex justify-end space-x-1">
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => toggleStatus(user)}
-                        className={user.status === "active" ? "text-green-400" : "text-gray-500"}
+                        onClick={() => handleEditClick(user)}
                       >
-                        {user.status === "active" ? <UserCheck size={16} /> : <UserX size={16} />}
+                        <Edit size={16} />
                       </Button>
                       
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleEdit(user)}
+                        onClick={() => handleDeleteClick(user)}
+                        className="text-red-400 hover:text-red-300"
                       >
-                        <Edit size={16} />
+                        <Trash2 size={16} />
                       </Button>
                     </div>
                   </TableCell>
@@ -354,7 +296,7 @@ const AdminUsers = () => {
               {users.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    No users found. Click "Add User" to create one.
+                    No users found.
                   </TableCell>
                 </TableRow>
               )}
@@ -362,6 +304,44 @@ const AdminUsers = () => {
           </Table>
         </div>
       </Card>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="glass-card border border-white/20 text-white">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {userToDelete && (
+            <div className="py-4">
+              <p><span className="text-gray-400">Email:</span> {userToDelete.email}</p>
+              {userToDelete.full_name && (
+                <p><span className="text-gray-400">Name:</span> {userToDelete.full_name}</p>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+              ) : "Delete User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
