@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      client_logos: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          name: string
+          order: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          name: string
+          order?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+          order?: number
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -60,6 +84,7 @@ export type Database = {
           isRead: boolean | null
           message: string
           name: string
+          status: string | null
         }
         Insert: {
           created_at?: string | null
@@ -69,6 +94,7 @@ export type Database = {
           isRead?: boolean | null
           message: string
           name: string
+          status?: string | null
         }
         Update: {
           created_at?: string | null
@@ -78,6 +104,7 @@ export type Database = {
           isRead?: boolean | null
           message?: string
           name?: string
+          status?: string | null
         }
         Relationships: []
       }
@@ -210,29 +237,62 @@ export type Database = {
       portfolio: {
         Row: {
           category: string
+          challenges: string | null
+          client_name: string | null
+          completion_date: string | null
           created_at: string | null
           description: string
+          featured: boolean | null
+          gallery: string[] | null
           id: string
           imageUrl: string
           link: string
+          project_duration: string | null
+          results: string[] | null
+          solutions: string | null
+          technologies: string[] | null
+          testimonial: string | null
+          testimonial_author: string | null
           title: string
         }
         Insert: {
           category: string
+          challenges?: string | null
+          client_name?: string | null
+          completion_date?: string | null
           created_at?: string | null
           description: string
+          featured?: boolean | null
+          gallery?: string[] | null
           id?: string
           imageUrl: string
           link: string
+          project_duration?: string | null
+          results?: string[] | null
+          solutions?: string | null
+          technologies?: string[] | null
+          testimonial?: string | null
+          testimonial_author?: string | null
           title: string
         }
         Update: {
           category?: string
+          challenges?: string | null
+          client_name?: string | null
+          completion_date?: string | null
           created_at?: string | null
           description?: string
+          featured?: boolean | null
+          gallery?: string[] | null
           id?: string
           imageUrl?: string
           link?: string
+          project_duration?: string | null
+          results?: string[] | null
+          solutions?: string | null
+          technologies?: string[] | null
+          testimonial?: string | null
+          testimonial_author?: string | null
           title?: string
         }
         Relationships: []
@@ -330,6 +390,7 @@ export type Database = {
           details: string
           icon: string
           id: string
+          slug: string | null
           title: string
         }
         Insert: {
@@ -339,6 +400,7 @@ export type Database = {
           details: string
           icon: string
           id?: string
+          slug?: string | null
           title: string
         }
         Update: {
@@ -348,6 +410,7 @@ export type Database = {
           details?: string
           icon?: string
           id?: string
+          slug?: string | null
           title?: string
         }
         Relationships: []

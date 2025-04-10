@@ -1,10 +1,8 @@
-import React from "react";
 
-interface ClientLogo {
-  id: number;
-  name: string;
-  imageUrl: string;
-}
+import React from "react";
+import { Tables } from "@/integrations/supabase/types";
+
+type ClientLogo = Tables<'client_logos'>;
 
 interface ClientLogosProps {
   logos: ClientLogo[];
@@ -19,7 +17,7 @@ const ClientLogos: React.FC<ClientLogosProps> = ({ logos }) => {
           {logos?.map((logo) => (
             <div key={logo.id} className="flex items-center justify-center">
               <img
-                src={logo.imageUrl}
+                src={logo.image_url}
                 alt={logo.name}
                 className="h-12 object-contain grayscale hover:grayscale-0 transition duration-300"
               />

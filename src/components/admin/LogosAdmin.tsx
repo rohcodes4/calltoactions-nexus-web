@@ -4,79 +4,171 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { Portfolio } from '@/lib/supabase';
-import { fetchPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from '@/services/databaseService';
-import PortfolioForm from './PortfolioForm';
-import PortfolioList from './PortfolioList';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ClientLogos from './ClientLogos';
+import { Tables } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import ClientLogoList from './ClientLogoList';
+import ClientLogoForm, { ClientLogo } from './ClientLogoForm';
 
 const LogosAdmin = () => {
-  const [editingItem, setEditingItem] = useState<Portfolio | null>(null);
+  const [editingItem, setEditingItem] = useState<ClientLogo | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch portfolio items from database
-  const { data: portfolioItems = [], isLoading, error } = useQuery({
-    queryKey: ['portfolio'],
-    queryFn: fetchPortfolio
+  // Fetch client logos from database
+  const { data: clientLogos = [], isLoading, error } = useQuery({
+    queryKey: ['clientLogos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('client_logos')
+        .select('*')
+        .order('order');
+      
+      if (error) throw error;
+      return data;
+    }
   });
 
-  // Create portfolio item mutation
+  // Create client logo mutation
   const createMutation = useMutation({
-    mutationFn: createPortfolioItem,
+    mutationFn: async (newLogo: Omit<ClientLogo, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('client_logos')
+        .insert(newLogo)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
+      toast({
+        title: "Logo added",
+        description: "Client logo has been added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to add logo: ${error.message}`,
+        variant: "destructive"
+      });
     }
   });
 
-  // Update portfolio item mutation
+  // Update client logo mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Portfolio> }) => 
-      updatePortfolioItem(id, updates),
+    mutationFn: async (logo: ClientLogo) => {
+      const { id, ...updates } = logo;
+      const { data, error } = await supabase
+        .from('client_logos')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
+      toast({
+        title: "Logo updated",
+        description: "Client logo has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update logo: ${error.message}`,
+        variant: "destructive"
+      });
     }
   });
 
-  // Delete portfolio item mutation
+  // Delete client logo mutation
   const deleteMutation = useMutation({
-    mutationFn: deletePortfolioItem,
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('client_logos')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
+      toast({
+        title: "Logo deleted",
+        description: "Client logo has been deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete logo: ${error.message}`,
+        variant: "destructive"
+      });
     }
   });
 
-  const handleEdit = (item: Portfolio) => {
-    setEditingItem({ ...item });
+  // Reorder client logos mutation
+  const reorderMutation = useMutation({
+    mutationFn: async (logos: ClientLogo[]) => {
+      const updates = logos.map((logo, index) => ({
+        id: logo.id,
+        order: index
+      }));
+      
+      const { error } = await supabase
+        .from('client_logos')
+        .upsert(updates);
+      
+      if (error) throw error;
+      return logos;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
+      toast({
+        title: "Order updated",
+        description: "Logo order has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update order: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleEdit = (item: ClientLogo) => {
+    setEditingItem(item);
     setIsAdding(false);
   };
 
   const handleAdd = () => {
-    // Changed: Remove the ID generation here since Supabase will generate the UUID
     const newItem = {
-      id: '', // Empty ID, will be generated by Supabase
-      title: "",
-      category: "Web Design",
-      imageUrl: "",
-      description: "",
-      link: ""
+      id: '',
+      name: "",
+      image_url: "",
+      order: clientLogos.length,
+      created_at: ''
     };
     setEditingItem(newItem);
     setIsAdding(true);
   };
 
-  const handleSave = (item: Portfolio) => {
+  const handleSave = (item: ClientLogo) => {
     if (isAdding) {
-      // For new items, don't include the id field
-      const { id, ...itemWithoutId } = item;
-      createMutation.mutate(itemWithoutId as Portfolio);
+      const { id, created_at, ...newLogo } = item;
+      createMutation.mutate(newLogo);
     } else {
-      updateMutation.mutate({ 
-        id: item.id, 
-        updates: item 
-      });
+      updateMutation.mutate(item);
     }
     setEditingItem(null);
     setIsAdding(false);
@@ -87,27 +179,14 @@ const LogosAdmin = () => {
     setIsAdding(false);
   };
 
-  const logos = [
-    { id: 1, name: "Nike", imageUrl: "/logos/nike.svg" },
-    { id: 2, name: "Apple", imageUrl: "/logos/apple.svg" },   
-  ];
-
-  interface ClientLogo {
-    id: number;
-    name: string;
-    imageUrl: string;
-  }
-  
-  interface ClientLogosProps {
-    logos: ClientLogo[];
-  }
-
   const handleDelete = (id: string) => {
-    const itemToDelete = portfolioItems.find(item => item.id === id);
-    
-    if (window.confirm(`Are you sure you want to delete "${itemToDelete?.title}"?`)) {
+    if (window.confirm('Are you sure you want to delete this logo?')) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleReorder = (updatedLogos: ClientLogo[]) => {
+    reorderMutation.mutate(updatedLogos);
   };
 
   if (isLoading) {
@@ -118,7 +197,7 @@ const LogosAdmin = () => {
 
   if (error) {
     return <div className="text-red-500 p-4">
-      Error loading client logo's. Please try again later.
+      Error loading client logos. Please try again later.
     </div>;
   }
 
@@ -126,8 +205,8 @@ const LogosAdmin = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Client Logo's Management</h1>
-          <p className="text-gray-400">Add, edit, or remove client logo's from your website</p>
+          <h1 className="text-2xl font-bold text-white">Client Logos Management</h1>
+          <p className="text-gray-400">Add, edit, or remove client logos from your website</p>
         </div>
         <Button 
           onClick={handleAdd}
@@ -138,27 +217,33 @@ const LogosAdmin = () => {
         </Button>
       </div>
 
-      {editingItem ? (
+      {editingItem && (
         <Card className="glass-card p-6 mb-8">
           <h2 className="text-xl font-bold text-white mb-4">
-            {isAdding ? "Add New Project" : "Edit Project"}
+            {isAdding ? "Add New Logo" : "Edit Logo"}
           </h2>
           
-          <PortfolioForm 
+          <ClientLogoForm 
             isAdding={isAdding}
             editingItem={editingItem}
             onSave={handleSave}
             onCancel={handleCancel}
           />
         </Card>
-      ) : null}
-        <ClientLogos logos={logos} />
+      )}
 
-      {/* <PortfolioList 
-        portfolioItems={portfolioItems}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      /> */}
+      {clientLogos.length > 0 ? (
+        <ClientLogoList 
+          clientLogos={clientLogos}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onReorder={handleReorder}
+        />
+      ) : (
+        <Card className="glass-card p-6 text-center">
+          <p className="text-gray-400">No client logos found. Add your first logo to get started.</p>
+        </Card>
+      )}
     </div>
   );
 };

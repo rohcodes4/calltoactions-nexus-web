@@ -1,33 +1,40 @@
 
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 const ClientLogos = () => {
-  // Sample client logos - replace with actual client logos later
-  const logos = [
+  // Fetch client logos from database
+  const { data: logos = [], isLoading } = useQuery({
+    queryKey: ['clientLogos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('client_logos')
+        .select('*')
+        .order('order');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fallback logos for when database is empty or loading
+  const fallbackLogos = [
     { name: "Microsoft", logo: "https://placehold.co/200x80/101932/white?text=Microsoft" },
     { name: "Adobe", logo: "https://placehold.co/200x80/101932/white?text=Adobe" },
     { name: "Google", logo: "https://placehold.co/200x80/101932/white?text=Google" },
     { name: "Amazon", logo: "https://placehold.co/200x80/101932/white?text=Amazon" },
     { name: "IBM", logo: "https://placehold.co/200x80/101932/white?text=IBM" },
     { name: "Apple", logo: "https://placehold.co/200x80/101932/white?text=Apple" },
-    { name: "Facebook", logo: "https://placehold.co/200x80/101932/white?text=Facebook" },
-    { name: "Twitter", logo: "https://placehold.co/200x80/101932/white?text=Twitter" },
-    { name: "Intel", logo: "https://placehold.co/200x80/101932/white?text=Intel" },
-    { name: "Samsung", logo: "https://placehold.co/200x80/101932/white?text=Samsung" },
-    { name: "Oracle", logo: "https://placehold.co/200x80/101932/white?text=Oracle" },
-    { name: "Tesla", logo: "https://placehold.co/200x80/101932/white?text=Tesla" },
-    { name: "Uber", logo: "https://placehold.co/200x80/101932/white?text=Uber" },
-    { name: "Airbnb", logo: "https://placehold.co/200x80/101932/white?text=Airbnb" },
-    { name: "Netflix", logo: "https://placehold.co/200x80/101932/white?text=Netflix" },
-    { name: "Spotify", logo: "https://placehold.co/200x80/101932/white?text=Spotify" },
-    { name: "Slack", logo: "https://placehold.co/200x80/101932/white?text=Slack" },
-    { name: "Zoom", logo: "https://placehold.co/200x80/101932/white?text=Zoom" },
-    { name: "LinkedIn", logo: "https://placehold.co/200x80/101932/white?text=LinkedIn" },
-    { name: "Dropbox", logo: "https://placehold.co/200x80/101932/white?text=Dropbox" },
   ];
 
+  // Use database logos if available, otherwise use fallback
+  const displayLogos = logos.length > 0 ? 
+    logos.map(logo => ({ name: logo.name, logo: logo.image_url })) : 
+    fallbackLogos;
+
   // Duplicate logos for infinite scroll effect
-  const duplicatedLogos = [...logos, ...logos];
+  const duplicatedLogos = [...displayLogos, ...displayLogos];
 
   return (
     <section className="py-12 bg-agency-darker overflow-hidden">
