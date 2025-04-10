@@ -22,6 +22,8 @@ const initialProposal: Proposal = {
   status: 'draft',
 };
 
+type ProposalStatus = 'draft' | 'sent' | 'accepted' | 'rejected';
+
 const ProposalManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -135,7 +137,7 @@ const ProposalManager = () => {
     }
   };
 
-  const handleStatusChange = (id: string, status: string) => {
+  const handleStatusChange = (id: string, status: ProposalStatus) => {
     updateMutation.mutate({ id, updates: { status } });
   };
 
@@ -190,10 +192,10 @@ const ProposalManager = () => {
         <Card className="glass-card p-6 mb-6">
           <h2 className="text-xl font-bold text-white mb-4">Generate Proposal with AI</h2>
           <AIProposalGenerator 
-            clients={clients} 
-            onGenerate={handleGenerateAI} 
+            clients={clients}
             onCancel={() => setShowAIGenerator(false)}
             isLoading={generateAIMutation.isPending}
+            onSubmit={handleGenerateAI}
           />
         </Card>
       ) : null}
@@ -222,7 +224,10 @@ const ProposalManager = () => {
               Close
             </Button>
           </div>
-          <ProposalView proposal={viewProposal} clientName={getClientName(viewProposal.client_id)} />
+          <ProposalView 
+            proposal={viewProposal} 
+            client={getClientName(viewProposal.client_id)}
+          />
         </Card>
       ) : null}
 
@@ -297,7 +302,7 @@ const ProposalManager = () => {
                   <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
                     <Select 
                       defaultValue={proposal.status}
-                      onValueChange={(value) => handleStatusChange(proposal.id, value)}
+                      onValueChange={(value) => handleStatusChange(proposal.id, value as ProposalStatus)}
                     >
                       <SelectTrigger className="h-8 text-sm bg-agency-darker border-white/10 text-white w-32">
                         <SelectValue placeholder="Status" />

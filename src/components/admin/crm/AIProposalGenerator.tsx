@@ -1,214 +1,101 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Save, X, Plus, Trash2, Sparkles } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client } from '@/lib/supabase';
+import { AlertCircle } from 'lucide-react';
 
 interface AIProposalGeneratorProps {
   clients: Client[];
-  onSubmit: (
-    clientId: string, 
-    title: string, 
-    details: { 
-      clientInfo: Client, 
-      projectScope: string, 
-      budget: string, 
-      timeline: string, 
-      requirements: string[] 
-    }
-  ) => void;
   onCancel: () => void;
-  isGenerating: boolean;
+  isLoading: boolean;
+  onSubmit: (clientId: string, prompt: string) => void;
 }
 
-const AIProposalGenerator = ({ clients, onSubmit, onCancel, isGenerating }: AIProposalGeneratorProps) => {
-  const [clientId, setClientId] = useState('');
-  const [title, setTitle] = useState('');
-  const [projectScope, setProjectScope] = useState('');
-  const [budget, setBudget] = useState('');
-  const [timeline, setTimeline] = useState('');
-  const [requirements, setRequirements] = useState<string[]>(['']);
-  
-  const addRequirement = () => {
-    setRequirements([...requirements, '']);
-  };
-  
-  const updateRequirement = (index: number, value: string) => {
-    const updatedRequirements = [...requirements];
-    updatedRequirements[index] = value;
-    setRequirements(updatedRequirements);
-  };
-  
-  const removeRequirement = (index: number) => {
-    const updatedRequirements = requirements.filter((_, i) => i !== index);
-    setRequirements(updatedRequirements);
-  };
+const AIProposalGenerator = ({ clients, onCancel, isLoading, onSubmit }: AIProposalGeneratorProps) => {
+  const [clientId, setClientId] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
-  const handleSubmit = () => {
-    const clientInfo = clients.find(c => c.id === clientId);
-    if (!clientId || !clientInfo || !title) {
-      alert('Please select a client and enter a title');
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!clientId) {
+      setError('Please select a client');
       return;
     }
     
-    // Filter out empty requirements
-    const filteredRequirements = requirements.filter(req => req.trim() !== '');
+    if (!prompt || prompt.trim().length < 10) {
+      setError('Please provide a detailed prompt (at least 10 characters)');
+      return;
+    }
     
-    onSubmit(
-      clientId,
-      title,
-      {
-        clientInfo,
-        projectScope,
-        budget,
-        timeline,
-        requirements: filteredRequirements
-      }
-    );
+    setError('');
+    onSubmit(clientId, prompt);
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center">
-          <Sparkles size={24} className="mr-2 text-agency-purple" />
-          AI Proposal Generator
-        </h1>
-        <p className="text-gray-400">
-          Fill in the details below to generate a professional proposal using AI
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm text-gray-300 block mb-2">Client</label>
+        <Select value={clientId} onValueChange={setClientId}>
+          <SelectTrigger className="bg-white/5 border-white/10 text-white">
+            <SelectValue placeholder="Select a client" />
+          </SelectTrigger>
+          <SelectContent className="bg-agency-darker border-white/10 text-white">
+            {clients.map(client => (
+              <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
+        <label className="text-sm text-gray-300 block mb-2">Prompt</label>
+        <Textarea 
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Describe the proposal you want to generate. Include details about services, scope, project goals, etc."
+          className="bg-white/5 border-white/10 text-white min-h-[150px]"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          The more detailed your prompt, the better the generated proposal will be.
         </p>
       </div>
-
-      <Card className="glass-card p-6">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Client*</label>
-              <select 
-                value={clientId}
-                onChange={e => setClientId(e.target.value)}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-              >
-                <option value="">Select a client</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name} {client.company ? `(${client.company})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Proposal Title*</label>
-              <input 
-                type="text" 
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="e.g. Website Redesign Proposal"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="text-sm text-gray-300 block mb-1">Project Scope</label>
-            <textarea 
-              value={projectScope}
-              onChange={e => setProjectScope(e.target.value)}
-              className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-              rows={3}
-              placeholder="Describe what the project entails"
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Budget</label>
-              <input 
-                type="text" 
-                value={budget}
-                onChange={e => setBudget(e.target.value)}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="e.g. $5,000 - $8,000"
-              />
-            </div>
-            
-            <div>
-              <label className="text-sm text-gray-300 block mb-1">Timeline</label>
-              <input 
-                type="text" 
-                value={timeline}
-                onChange={e => setTimeline(e.target.value)}
-                className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-                placeholder="e.g. 6-8 weeks"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-sm text-gray-300">Key Requirements/Features</label>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={addRequirement}
-                className="h-8 px-2 text-agency-purple"
-              >
-                <Plus size={16} className="mr-1" />
-                Add
-              </Button>
-            </div>
-            
-            {requirements.map((req, index) => (
-              <div key={index} className="flex mb-2">
-                <input 
-                  type="text" 
-                  value={req}
-                  onChange={e => updateRequirement(index, e.target.value)}
-                  className="w-full p-2 rounded-l bg-white/10 border border-white/20 text-white"
-                  placeholder={`Requirement ${index + 1}`}
-                />
-                <button 
-                  className="bg-white/10 px-3 rounded-r border border-white/20 border-l-0 text-red-400 hover:text-red-300"
-                  onClick={() => removeRequirement(index)}
-                  disabled={requirements.length <= 1}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex justify-end mt-6 space-x-2">
-            <Button 
-              variant="outline"
-              onClick={onCancel}
-            >
-              <X size={16} className="mr-2" />
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} className="mr-2" />
-                  Generate Proposal
-                </>
-              )}
-            </Button>
-          </div>
+      
+      {error && (
+        <div className="bg-red-500/20 p-3 rounded-md flex items-start">
+          <AlertCircle size={16} className="text-red-400 mt-0.5 mr-2 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
         </div>
-      </Card>
-    </div>
+      )}
+      
+      <div className="flex justify-end space-x-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          className="border-white/10"
+        >
+          Cancel
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={isLoading}
+          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+        >
+          {isLoading ? (
+            <>
+              <span className="mr-2 animate-spin">⟳</span>
+              Generating...
+            </>
+          ) : (
+            "Generate Proposal"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 };
 

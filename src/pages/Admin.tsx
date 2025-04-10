@@ -302,6 +302,18 @@ const Admin = () => {
                 </Link>
                 
                 <Link 
+                  to="/admin/messages" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/messages') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Mail size={18} className="mr-3" />
+                  <span>Messages</span>
+                </Link>
+                
+                <Link 
                   to="/admin/newsletter" 
                   className={`flex items-center p-3 rounded-lg transition-colors ${
                     location.pathname.includes('/admin/newsletter') 

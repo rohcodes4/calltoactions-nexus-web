@@ -56,7 +56,7 @@ const Home = () => {
           >
             <Button 
               onClick={scrollToTop}
-              className="rounded-full w-12 h-12 bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+              className="rounded-full w-12 h-12 bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple shadow-lg shadow-purple-500/20 animate-pulse"
             >
               <ArrowUp size={20} />
             </Button>
