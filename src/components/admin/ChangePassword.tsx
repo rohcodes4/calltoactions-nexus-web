@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Lock, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/lib/supabase';
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -48,10 +49,16 @@ const ChangePassword = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call - in a real app, this would call a backend endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use Supabase to update the password
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
       
-      // Simulate successful password change
+      if (error) {
+        throw error;
+      }
+      
+      // Success
       setSuccess(true);
       
       toast({
@@ -69,9 +76,10 @@ const ChangePassword = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update password. Please try again.",
+        description: error.message || "Failed to update password. Please try again.",
         variant: "destructive"
       });
+      console.error("Password update error:", error);
     } finally {
       setIsSubmitting(false);
     }

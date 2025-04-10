@@ -42,10 +42,8 @@ const Admin = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
-      // Get current session from Supabase
       const { data } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
       setIsLoading(false);
@@ -53,12 +51,10 @@ const Admin = () => {
     
     checkAuth();
 
-    // Set up listener for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
 
-    // Cleanup subscription on unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
@@ -83,6 +79,28 @@ const Admin = () => {
           variant: "destructive"
         });
       } else if (data.user) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('status')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (userError) {
+          throw userError;
+        }
+        
+        if (userData.status === 'inactive') {
+          await supabase.auth.signOut();
+          
+          setLoginError('Your account is inactive. Please contact an administrator.');
+          toast({
+            title: "Access denied",
+            description: "Your account is inactive. Please contact an administrator.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         toast({
           title: "Login successful",
           description: "Welcome to the admin panel"
@@ -216,7 +234,6 @@ const Admin = () => {
     <div className="min-h-screen bg-agency-dark pt-20">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
           <div className="lg:w-64 shrink-0">
             <Card className="glass-card p-4 sticky top-24">
               <div className="mb-6">
@@ -395,7 +412,6 @@ const Admin = () => {
             </Card>
           </div>
           
-          {/* Main Content */}
           <div className="flex-1">
             <Routes>
               <Route path="/" element={<Navigate to="/admin/services" replace />} />
