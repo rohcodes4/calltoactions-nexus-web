@@ -41,6 +41,8 @@ export type Portfolio = {
   gallery?: string[];
   project_duration?: string;
   created_at?: string;
+  testimonial?: string;
+  testimonial_author?: string;
 };
 
 export type Testimonial = {

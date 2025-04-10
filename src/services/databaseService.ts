@@ -218,7 +218,7 @@ export const fetchGeneralSettings = async () => {
   const { data, error } = await supabase
     .from('general_settings')
     .select('*')
-    .eq('id', '1')
+    .eq('id', 'e43ea57d-5a15-4677-b9ed-385320a85540')
     .single();
   
   if (error) {
@@ -286,7 +286,7 @@ export const submitContactForm = async (formData: { name: string; email: string;
         email: formData.email,
         message: formData.message,
         isRead: false,
-        status: 'new'
+        status: 'unread'
       }
     ]);
   

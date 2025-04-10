@@ -17,6 +17,13 @@ const iconMap: Record<string, JSX.Element> = {
   "FileText": <Monitor size={24} />
 };
 
+export function toSlug(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-'); // replaces one or more spaces with a hyphen
+}
+
 const ServicesSection = () => {
   // Fetch services from database
   const { data: services = [], isLoading } = useQuery({
@@ -117,7 +124,7 @@ const ServicesSection = () => {
                     title={service.title}
                     description={service.description}
                     icon={iconMap[service.icon] || <Monitor size={24} />}
-                    link={`/services/${service.id}`}
+                    link={`/services/${toSlug(service.title)}`}
                   />
                 </motion.div>
               ))}

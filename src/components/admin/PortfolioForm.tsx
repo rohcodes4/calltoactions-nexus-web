@@ -26,7 +26,9 @@ const portfolioSchema = z.object({
   testimonial_id: z.string().optional(),
   featured: z.boolean().optional(),
   gallery: z.array(z.string()).optional(),
-  project_duration: z.string().optional()
+  project_duration: z.string().optional(),
+  testimonial: z.string().optional(),
+  testimonial_author: z.string().optional(),
 });
 
 const categories = [
@@ -348,6 +350,26 @@ const PortfolioForm = ({ isAdding, editingItem, onSave, onCancel }: PortfolioFor
           <textarea 
             value={item.solutions || ''}
             onChange={e => setItem({...item, solutions: e.target.value})}
+            className="w-full p-2 rounded bg-white/10 border border-white/20 text-white h-16"
+            placeholder="How the challenges were addressed"
+          />
+        </div>
+        
+        <div className="mb-4">
+          <label className="text-sm text-gray-300 block mb-1">Testimonial</label>
+          <textarea 
+            value={item?.testimonial || ''}
+            onChange={e => setItem({...item, testimonial: e.target.value})}
+            className="w-full p-2 rounded bg-white/10 border border-white/20 text-white h-16"
+            placeholder="How the challenges were addressed"
+          />
+        </div>
+        
+        <div className="mb-4">
+          <label className="text-sm text-gray-300 block mb-1">Testimonial Author</label>
+          <textarea 
+            value={item?.testimonial_author || ''}
+            onChange={e => setItem({...item, testimonial_author: e.target.value})}
             className="w-full p-2 rounded bg-white/10 border border-white/20 text-white h-16"
             placeholder="How the challenges were addressed"
           />

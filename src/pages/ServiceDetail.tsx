@@ -20,13 +20,13 @@ const ServiceDetail = () => {
     enabled: !!serviceId,
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-agency-dark pt-32 flex justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
-      </div>
-    );
-  }
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-agency-dark pt-32 flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+        </div>
+      );
+    }
 
   if (error || !service) {
     toast({

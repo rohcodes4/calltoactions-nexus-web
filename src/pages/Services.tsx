@@ -10,9 +10,10 @@ import { fetchServices } from '@/services/databaseService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { toSlug } from '@/components/home/ServicesSection';
 
 // Icon mapping for service icons
-const iconMap: Record<string, JSX.Element> = {
+export const iconMap: Record<string, JSX.Element> = {
   "Monitor": <Monitor size={24} />,
   "Code": <Code size={24} />,
   "Video": <Video size={24} />,
@@ -163,7 +164,7 @@ const Services = () => {
               {services.map((service) => (
                 <a 
                   key={service.id} 
-                  href={`#${service.id}`} 
+                  href={`/services/${toSlug(service.title)}`} 
                   className={`
                     inline-flex items-center px-4 py-2 rounded-full transition-colors duration-300
                     ${activeSection === service.id 
@@ -230,7 +231,7 @@ const Services = () => {
                     title={service.title}
                     description={service.description}
                     icon={iconMap[service.icon] || <Monitor size={24} />}
-                    link={`/services/${service.id}`}
+                    link={`/services/${toSlug(service.title)}`}
                   />
                 </motion.div>
               ))}
@@ -279,7 +280,7 @@ const Services = () => {
                       </motion.li>
                     ))}
                   </ul>
-                  <Link to={`/services/${service.id}`}>
+                  <Link to={`/services/${toSlug(service.title)}`}>
                     <Button 
                       className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all group shadow-lg shadow-purple-900/20"
                     >

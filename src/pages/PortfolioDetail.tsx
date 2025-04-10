@@ -1,8 +1,11 @@
 
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ExternalLink, Calendar, Tag, User } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPortfolioById } from '@/services/databaseService';
 
 // Sample portfolio projects data
 const portfolioProjects = {
@@ -115,7 +118,25 @@ const portfolioProjects = {
 
 const PortfolioDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const project = projectId ? portfolioProjects[projectId as keyof typeof portfolioProjects] : null;
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const { data: project, isLoading, error } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => fetchPortfolioById(projectId as string),
+    enabled: !!projectId,
+  });
+
+  console.log("Project")
+  console.log(project)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-agency-dark pt-32 flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
+      </div>
+    );
+  }
+
   
   if (!project) {
     return (
@@ -157,11 +178,11 @@ const PortfolioDetail = () => {
               <div className="flex flex-wrap gap-6 mb-8">
                 <div className="flex items-center text-gray-400">
                   <User size={16} className="mr-2 text-agency-purple" />
-                  <span>{project.client}</span>
+                  <span>{project.client_name}</span>
                 </div>
                 <div className="flex items-center text-gray-400">
                   <Calendar size={16} className="mr-2 text-agency-purple" />
-                  <span>{project.date}</span>
+                  <span>{project.completion_date}</span>
                 </div>
                 <div className="flex items-center text-gray-400">
                   <Tag size={16} className="mr-2 text-agency-purple" />
@@ -176,8 +197,9 @@ const PortfolioDetail = () => {
               <Button 
                 variant="outline" 
                 className="border-agency-purple/30 text-white hover:bg-agency-purple/10 group"
+                onClick={()=>window.open(project?.link,"_blank")}
               >
-                <ExternalLink size={16} className="mr-2" />
+                <ExternalLink size={16} className="mr-2"/>
                 Visit Project
               </Button>
             </div>
@@ -204,14 +226,14 @@ const PortfolioDetail = () => {
                 The <span className="text-gradient">Challenge</span>
               </h2>
               <p className="text-gray-300 mb-12">
-                {project.challenge}
+                {project.challenges}
               </p>
               
               <h2 className="text-2xl font-bold text-white mb-6">
                 Our <span className="text-gradient">Solution</span>
               </h2>
               <p className="text-gray-300">
-                {project.solution}
+                {project.solutions}
               </p>
             </div>
             
@@ -220,7 +242,7 @@ const PortfolioDetail = () => {
                 The <span className="text-gradient">Results</span>
               </h2>
               <ul className="space-y-4 mb-12">
-                {project.results.map((result, index) => (
+                {project?.results?.map((result, index) => (
                   <li key={index} className="flex items-start">
                     <div className="w-6 h-6 rounded-full bg-agency-purple/10 flex items-center justify-center text-agency-purple mr-3 flex-shrink-0">
                       <span className="text-xs font-bold">{index + 1}</span>
@@ -234,11 +256,11 @@ const PortfolioDetail = () => {
               <div className="glass-card p-8 rounded-lg">
                 <div className="text-agency-purple text-4xl mb-4">"</div>
                 <p className="text-white text-lg italic mb-6">
-                  {project.testimonial.quote}
+                  {project?.testimonial}
                 </p>
                 <div>
-                  <div className="font-bold text-white">{project.testimonial.author}</div>
-                  <div className="text-gray-400 text-sm">{project.testimonial.position}</div>
+                  <div className="font-bold text-white">{project?.client_name}</div>
+                  <div className="text-gray-400 text-sm">{project?.testimonial_author}</div>
                 </div>
               </div>
             </div>
@@ -254,7 +276,7 @@ const PortfolioDetail = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {project.galleryImages.map((image, index) => (
+            {project?.galleryImages?.map((image, index) => (
               <div key={index} className="overflow-hidden rounded-lg shadow-lg">
                 <img 
                   src={image} 

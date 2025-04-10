@@ -184,6 +184,7 @@ const ContactSubmissions = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleReadStatus(message);
+                              queryClient.invalidateQueries({ queryKey: ['contactMessages'] });
                             }}
                             title={message.isRead ? "Mark as unread" : "Mark as read"}
                           >

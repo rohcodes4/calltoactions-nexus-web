@@ -69,7 +69,7 @@ const HeroSection = () => {
           </Button>
         </div>
         
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
+        <div className="relative -bottom-10 left-0 right-0 flex justify-center">
           <button 
             onClick={scrollToNextSection}
             className={`flex flex-col items-center text-white/60 hover:text-white transition-all duration-300 ${
