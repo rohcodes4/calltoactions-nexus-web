@@ -2,6 +2,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+type ClientLogo = Tables<'client_logos'>;
 
 const ClientLogos = () => {
   // Fetch client logos from database
@@ -14,7 +17,7 @@ const ClientLogos = () => {
         .order('order');
       
       if (error) throw error;
-      return data;
+      return data as ClientLogo[];
     }
   });
 
@@ -33,8 +36,8 @@ const ClientLogos = () => {
     logos.map(logo => ({ name: logo.name, logo: logo.image_url })) : 
     fallbackLogos;
 
-  // Duplicate logos for infinite scroll effect
-  const duplicatedLogos = [...displayLogos, ...displayLogos];
+  // Triple logos for better infinite scroll effect
+  const triplicatedLogos = [...displayLogos, ...displayLogos, ...displayLogos];
 
   return (
     <section className="py-12 bg-agency-darker overflow-hidden">
@@ -47,14 +50,17 @@ const ClientLogos = () => {
       <div className="relative">
         <motion.div 
           className="flex space-x-12 whitespace-nowrap"
-          animate={{ x: ["0%", "-50%"] }}
+          animate={{ 
+            x: [0, -1 * ((displayLogos.length * 210) / 2)] 
+          }}
           transition={{ 
-            duration: 40, 
-            repeat: Infinity, 
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 30, 
             ease: "linear",
           }}
         >
-          {duplicatedLogos.map((logo, index) => (
+          {triplicatedLogos.map((logo, index) => (
             <div 
               key={`${logo.name}-${index}`} 
               className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
@@ -62,7 +68,7 @@ const ClientLogos = () => {
               <img 
                 src={logo.logo} 
                 alt={`${logo.name} logo`} 
-                className="h-12 md:h-16 object-contain rounded grayscale hover:grayscale-0 transition-all duration-300"
+                className="h-12 md:h-16 object-contain w-48 rounded grayscale hover:grayscale-0 transition-all duration-300"
               />
             </div>
           ))}

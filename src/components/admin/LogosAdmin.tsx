@@ -8,7 +8,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import ClientLogoList from './ClientLogoList';
-import ClientLogoForm, { ClientLogo } from './ClientLogoForm';
+import ClientLogoForm from './ClientLogoForm';
+
+type ClientLogo = Tables<'client_logos'>;
 
 const LogosAdmin = () => {
   const [editingItem, setEditingItem] = useState<ClientLogo | null>(null);
@@ -26,7 +28,7 @@ const LogosAdmin = () => {
         .order('order');
       
       if (error) throw error;
-      return data;
+      return data as ClientLogo[];
     }
   });
 
@@ -40,7 +42,7 @@ const LogosAdmin = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as ClientLogo;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
@@ -70,7 +72,7 @@ const LogosAdmin = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as ClientLogo;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientLogos'] });
@@ -152,7 +154,7 @@ const LogosAdmin = () => {
   };
 
   const handleAdd = () => {
-    const newItem = {
+    const newItem: ClientLogo = {
       id: '',
       name: "",
       image_url: "",

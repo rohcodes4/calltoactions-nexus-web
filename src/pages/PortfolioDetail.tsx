@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,6 +87,23 @@ const PortfolioDetail = () => {
     );
   };
 
+  const ResultsSection = ({ portfolio }: { portfolio: Portfolio }) => {
+    if (!portfolio.results || portfolio.results.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-10">
+        <h3 className="text-xl font-medium mb-4">Results</h3>
+        <ul className="list-disc list-inside space-y-2">
+          {portfolio.results.map((result, index) => (
+            <li key={index} className="text-gray-300">{result}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-agency-dark pt-32 pb-20">
       <div className="container mx-auto px-4">
@@ -172,16 +188,7 @@ const PortfolioDetail = () => {
               </>
             )}
             
-            {project.results && project.results.length > 0 && (
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold text-white mb-4">Results</h2>
-                <ul className="list-disc list-inside space-y-2 text-gray-300">
-                  {project.results.map((result, index) => (
-                    <li key={index} className="leading-relaxed">{result}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <ResultsSection portfolio={project} />
             
             {project.testimonial && (
               <div className="mt-10 bg-agency-darker p-6 rounded-lg border border-gray-800">

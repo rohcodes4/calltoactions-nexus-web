@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Tables } from "@/integrations/supabase/types";
 
-export type ClientLogo = Tables<'client_logos'>;
+type ClientLogo = Tables<'client_logos'>;
 
 interface Props {
   isAdding: boolean;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const ClientLogoForm = ({ isAdding, editingItem, onSave, onCancel }: Props) => {
-  const [logo, setLogo] = useState(editingItem);
+  const [logo, setLogo] = useState<ClientLogo>(editingItem);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
