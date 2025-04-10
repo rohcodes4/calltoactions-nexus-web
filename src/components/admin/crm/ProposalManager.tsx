@@ -62,8 +62,17 @@ const ProposalManager = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<Proposal> }) =>
-      updateProposal(id, updates),
+    mutationFn: ({ id, updates }: { id: string, updates: Partial<Proposal> }) => {
+      // Create a clean copy of the updates object to avoid circular references
+      const cleanUpdates = JSON.parse(JSON.stringify({
+        title: updates.title,
+        content: updates.content,
+        client_id: updates.client_id,
+        status: updates.status,
+        ai_generated: updates.ai_generated
+      }));
+      return updateProposal(id, cleanUpdates);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       toast({ title: "Success", description: "Proposal updated successfully" });
@@ -113,7 +122,16 @@ const ProposalManager = () => {
   };
 
   const handleEdit = (proposal: Proposal) => {
-    setCurrentProposal(proposal);
+    // Create a clean copy of the proposal object to avoid circular references
+    const cleanProposal = JSON.parse(JSON.stringify({
+      id: proposal.id,
+      title: proposal.title,
+      content: proposal.content,
+      client_id: proposal.client_id,
+      status: proposal.status,
+      ai_generated: proposal.ai_generated
+    }));
+    setCurrentProposal(cleanProposal);
     setEditMode(true);
     setViewProposal(null);
   };
@@ -130,10 +148,20 @@ const ProposalManager = () => {
   };
 
   const handleSave = (proposal: Proposal) => {
-    if (proposal.id) {
-      updateMutation.mutate({ id: proposal.id, updates: proposal });
+    // Create a clean copy of the proposal object to avoid circular references
+    const cleanProposal = JSON.parse(JSON.stringify({
+      id: proposal.id,
+      title: proposal.title,
+      content: proposal.content,
+      client_id: proposal.client_id,
+      status: proposal.status,
+      ai_generated: proposal.ai_generated
+    }));
+    
+    if (cleanProposal.id) {
+      updateMutation.mutate({ id: cleanProposal.id, updates: cleanProposal });
     } else {
-      createMutation.mutate(proposal);
+      createMutation.mutate(cleanProposal);
     }
   };
 

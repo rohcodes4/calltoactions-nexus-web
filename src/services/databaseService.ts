@@ -1,4 +1,3 @@
-
 import { supabase, Service, Portfolio, Testimonial, Client, Project, GeneralSettings, SocialLinks, Invoice, Proposal, ContactMessage, NewsletterSubscription, User } from '@/lib/supabase';
 
 // General services
@@ -675,26 +674,28 @@ export const deleteProposal = async (id: string) => {
 };
 
 export const generateProposalWithAI = async (clientId: string, prompt: string) => {
-  // Simplified example - in a real app, this would call an OpenAI endpoint or similar
-  const { data: client } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('id', clientId)
-    .single();
-    
-  if (!client) {
-    throw new Error('Client not found');
+  try {
+    // Call our edge function instead of external API
+    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/generate-proposal`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.supabaseKey}`
+      },
+      body: JSON.stringify({ clientId, prompt })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to generate proposal');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error generating proposal with AI:', error);
+    throw error;
   }
-  
-  const proposalText = `# Proposal for ${client.name}\n\n`;
-  
-  return {
-    title: `Proposal for ${client.name}`,
-    content: proposalText,
-    client_id: clientId,
-    ai_generated: true,
-    status: 'draft'
-  };
 };
 
 // Invoice management

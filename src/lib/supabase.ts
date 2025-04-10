@@ -43,6 +43,7 @@ export type Portfolio = {
   created_at?: string;
   testimonial?: string;
   testimonial_author?: string;
+  results?: string[];
 };
 
 export type Testimonial = {

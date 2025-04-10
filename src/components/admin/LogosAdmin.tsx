@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -147,6 +146,33 @@ const LogosAdmin = () => {
       });
     }
   });
+
+  const updateLogosOrder = async (logos) => {
+    try {
+      // Update each logo individually instead of bulk upsert
+      for (const logo of logos) {
+        await supabase
+          .from('client_logos')
+          .update({ order: logo.order })
+          .eq('id', logo.id);
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Logos order updated successfully',
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating logos order:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update logos order',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
 
   const handleEdit = (item: ClientLogo) => {
     setEditingItem(item);
