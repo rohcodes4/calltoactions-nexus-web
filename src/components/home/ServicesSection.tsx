@@ -62,7 +62,7 @@ const ServicesSection = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <motion.div 
                 className="md:col-span-2 glass-card p-8 rounded-lg bg-gradient-to-br from-agency-purple/10 to-agency-blue/5"
                 initial={{ opacity: 0, x: -50 }}
@@ -108,10 +108,10 @@ const ServicesSection = () => {
                   </Link>
                 </div>
               </motion.div>
-            </div>
+            </div> */}
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-              {services.slice(0, 3).map((service, i) => (
+              {services.slice(0, 6).map((service, i) => (
                 <motion.div 
                   key={service.id}
                   custom={i}
