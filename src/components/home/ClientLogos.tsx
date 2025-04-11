@@ -49,7 +49,7 @@ const ClientLogos = () => {
       
       <div className="relative">
         <motion.div 
-          className="flex space-x-12 whitespace-nowrap"
+          className="flex space-x-16 whitespace-nowrap"
           animate={{ 
             x: [0, -1 * ((displayLogos.length * 210) / 2)] 
           }}
@@ -68,7 +68,7 @@ const ClientLogos = () => {
               <img 
                 src={logo.logo} 
                 alt={`${logo.name} logo`} 
-                className="h-16 md:h-20 object-contain w-48 rounded grayscale hover:grayscale-0 hover:scale-110 transition-all duration-300 cursor-pointer"
+                className="min-w-[150px] object-contain rounded grayscale hover:grayscale-0 hover:scale-110 transition-all duration-300 cursor-pointer"
               />
             </div>
           ))}
