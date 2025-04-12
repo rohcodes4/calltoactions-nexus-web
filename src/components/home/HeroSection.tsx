@@ -48,9 +48,9 @@ const HeroSection = () => {
           <span className="text-gradient">Digital Experiences</span><br />
           That <span className="text-gradient">Convert</span>
         </h1>
-        <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-10">
+        {/* <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-10">
           Transforming visions into captivating digital realities. Your brand deserves a powerful online presence that drives real results.
-        </p>
+        </p> */}
         <div className="flex flex-col sm:flex-row gap-4 mb-16">
           <Button 
             size="lg" 
