@@ -7,7 +7,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ContactForm from '@/components/ContactForm';
 import { motion } from 'framer-motion';
-import { iconMap } from '@/pages/Services';
+import { iconMap, parseBoldText } from '@/pages/Services';
 
 const ServiceDetail = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -131,7 +131,7 @@ const ServiceDetail = () => {
             <div className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-8">Overview</h2>
               <div className="prose prose-invert max-w-none">
-                <p className="text-gray-300 whitespace-pre-wrap">{service.details}</p>
+                <p className="text-gray-300 whitespace-pre-wrap">{parseBoldText(service.details)}</p>
               </div>
             </div>
             

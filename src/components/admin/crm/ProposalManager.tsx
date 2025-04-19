@@ -149,8 +149,12 @@ const ProposalManager = () => {
 
   const handleSave = (proposal: Proposal) => {
     // Create a clean copy of the proposal object to avoid circular references
+    toast({
+      title: "Proposal ID",
+      description: proposal.id
+    });
     const cleanProposal = JSON.parse(JSON.stringify({
-      id: proposal.id,
+      // id: proposal.id,
       title: proposal.title,
       content: proposal.content,
       client_id: proposal.client_id,

@@ -1,8 +1,12 @@
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
 import ContactForm from '@/components/ContactForm';
+import { fetchGeneralSettings, fetchSocialLinks, updateGeneralSettings, updateSocialLinks } from '@/services/databaseService';
+import { GeneralSettings, SocialLinks } from '@/lib/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ContactInfo = ({ icon, title, details }: { icon: React.ReactNode, title: string, details: React.ReactNode }) => {
   return (
@@ -17,6 +21,58 @@ const ContactInfo = ({ icon, title, details }: { icon: React.ReactNode, title: s
 };
 
 const Contact = () => {
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
+      id: '',
+      siteTitle: "CallToActions",
+      siteTagline: "We Create Digital Experiences That Convert",
+      adminEmail: "rohitparakh4@gmail.com",
+      phoneNumber: "+1 (555) 123-4567",
+      address: "123 Creative St, Digital City, 90210"
+    });
+
+     const [socialLinks, setSocialLinks] = useState<SocialLinks>({
+        id: '',
+        facebook: "https://facebook.com",
+        twitter: "https://twitter.com",
+        instagram: "https://instagram.com",
+        linkedin: "https://linkedin.com",
+        youtube: ""
+      });
+
+       // Fetch general settings
+  const { 
+    data: settingsData, 
+    isLoading: isLoadingSettings,
+    error: settingsError,
+    refetch: refetchSettings 
+  } = useQuery({
+    queryKey: ['generalSettings'],
+    queryFn: fetchGeneralSettings
+  });
+
+  // Fetch social links
+  const { 
+    data: socialData, 
+    isLoading: isLoadingSocial,
+    error: socialError,
+    refetch: refetchSocial 
+  } = useQuery({
+    queryKey: ['socialLinks'],
+    queryFn: fetchSocialLinks
+  });
+
+  // Update settings when data is loaded
+  useEffect(() => {
+    if (settingsData) {
+      setGeneralSettings(settingsData);
+    }
+  }, [settingsData]);
+
+  useEffect(() => {
+    if (socialData) {
+      setSocialLinks(socialData);
+    }
+  }, [socialData]);
   return (
     <div className="flex flex-col min-h-screen bg-agency-dark pt-20">
       {/* Hero Section */}
@@ -42,8 +98,7 @@ const Contact = () => {
               title="Our Location"
               details={
                 <>
-                  123 Creative Avenue, Suite 101<br />
-                  Digital City, DC 10101
+                  {generalSettings.address}
                 </>
               }
             />
@@ -52,12 +107,9 @@ const Contact = () => {
               title="Phone Number"
               details={
                 <>
-                  <a href="tel:+11234567890" className="hover:text-white transition-colors">
-                    +1 (123) 456-7890
+                  <a href={`tel:${generalSettings.phoneNumber}`} className="hover:text-white transition-colors">
+                  {generalSettings.phoneNumber}
                   </a><br />
-                  <a href="tel:+11234567891" className="hover:text-white transition-colors">
-                    +1 (123) 456-7891
-                  </a>
                 </>
               }
             />
@@ -66,12 +118,9 @@ const Contact = () => {
               title="Email Address"
               details={
                 <>
-                  <a href="mailto:info@calltoactions.com" className="hover:text-white transition-colors">
-                    info@calltoactions.com
+                  <a href={`mailto:${generalSettings.adminEmail}`} className="hover:text-white transition-colors">
+                  {generalSettings.adminEmail}
                   </a><br />
-                  <a href="mailto:support@calltoactions.com" className="hover:text-white transition-colors">
-                    support@calltoactions.com
-                  </a>
                 </>
               }
             />
@@ -81,7 +130,7 @@ const Contact = () => {
               details={
                 <>
                   Monday - Friday<br />
-                  9:00 AM - 6:00 PM EST
+                  9:00 AM - 6:00 PM IST
                 </>
               }
             />
@@ -92,25 +141,24 @@ const Contact = () => {
       {/* Contact Form and Map */}
       <section className="py-16 bg-agency-darker">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="lg:w-1/2">
+          <div className="flex justify-center flex-col lg:flex-row gap-8">
+            <div className="lg:w-full max-w-3xl">
               <div className="glass-card p-8 rounded-lg h-full">
                 <h2 className="text-2xl font-bold text-white mb-6">Send Us a Message</h2>
                 <ContactForm />
               </div>
             </div>
-            <div className="lg:w-1/2">
+            {/* <div className="lg:w-1/2">
               <div className="glass-card p-8 rounded-lg h-full">
                 <h2 className="text-2xl font-bold text-white mb-6">Our Location</h2>
                 <div className="aspect-square w-full bg-agency-purple/10 rounded-lg flex items-center justify-center text-agency-purple">
-                  {/* This is a placeholder for a map */}
                   <div className="text-center">
                     <MapPin size={48} className="mx-auto mb-4" />
                     <p className="text-white">Interactive map will be displayed here</p>
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

@@ -20,6 +20,7 @@ const ProposalForm = ({ proposal: initialProposal, clients, onSave, onCancel, is
   };
 
   const handleSubmit = (e: React.FormEvent) => {
+    console.log({proposal})
     e.preventDefault();
     onSave(proposal);
   };

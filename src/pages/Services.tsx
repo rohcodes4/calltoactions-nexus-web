@@ -22,6 +22,20 @@ export const iconMap: Record<string, JSX.Element> = {
   "Search": <Search size={24} />
 };
 
+export const parseBoldText = (text: any) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <div key={index} style={{ marginTop: '1rem' }}>
+          <strong>{part.slice(2, -2)}</strong>
+        </div>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 const Services = () => {
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -127,6 +141,8 @@ const Services = () => {
       transition: { duration: 0.6 }
     }
   };
+  
+  
 
   return (
     <div className="flex flex-col min-h-screen bg-agency-dark pt-20">
@@ -263,7 +279,7 @@ const Services = () => {
                     <h2 className="text-3xl font-bold text-white">{service.title}</h2>
                   </div>
                   <p className="text-gray-300 mb-6">
-                    {service.details}
+                    {parseBoldText(service.details)}
                   </p>
                   <ul className="space-y-4 mb-8">
                     {service.benefits.map((benefit, index) => (

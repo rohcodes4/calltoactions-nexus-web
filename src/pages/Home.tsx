@@ -41,8 +41,8 @@ const Home = () => {
       <ResultsSection />
       <PortfolioSection />
       <ProcessSection />
-      <TestimonialsSection />
       <StatsSection />
+      <TestimonialsSection />
       <FAQSection />
       <ContactSection />
       
