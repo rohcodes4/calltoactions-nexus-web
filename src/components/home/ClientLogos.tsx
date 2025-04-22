@@ -68,7 +68,7 @@ const ClientLogos = () => {
               <img 
                 src={logo.logo} 
                 alt={`${logo.name} logo`} 
-                className="min-w-[150px] object-contain rounded grayscale hover:grayscale-0 hover:scale-110 transition-all duration-300 cursor-pointer"
+                className="min-w-[150px] object-contain rounded hover:scale-110 transition-all duration-300 cursor-pointer"
               />
             </div>
           ))}

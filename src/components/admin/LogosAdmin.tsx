@@ -121,7 +121,10 @@ const LogosAdmin = () => {
     mutationFn: async (logos: ClientLogo[]) => {
       const updates = logos.map((logo, index) => ({
         id: logo.id,
-        order: index
+        order: index,
+        created_at: logo.created_at,
+    image_url: logo.image_url,
+    name: logo.name
       }));
       
       const { error } = await supabase
