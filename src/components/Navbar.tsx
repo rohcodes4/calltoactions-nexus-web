@@ -49,7 +49,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center">
-            <span className="text-2xl font-bold text-gradient">CallToActions</span>
+            <span className="text-2xl font-bold text-gradient">TBD</span>
           </Link>
 
           {/* Mobile menu toggle */}
@@ -88,7 +88,7 @@ const Navbar = () => {
               className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all"
               onClick={handleGetStarted}
             >
-              Get in Touch
+              Book A Call
             </Button>
           </div>
         </div>
@@ -119,7 +119,7 @@ const Navbar = () => {
             className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all w-full mt-4"
             onClick={handleGetStarted}
           >
-            Get in Touch
+            Book A Call
           </Button>
         </div>
       </div>

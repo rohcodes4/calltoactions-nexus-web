@@ -23,7 +23,7 @@ const ContactInfo = ({ icon, title, details }: { icon: React.ReactNode, title: s
 const Contact = () => {
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
       id: '',
-      siteTitle: "CallToActions",
+      siteTitle: "TBD",
       siteTagline: "We Create Digital Experiences That Convert",
       adminEmail: "rohitparakh4@gmail.com",
       phoneNumber: "+1 (555) 123-4567",

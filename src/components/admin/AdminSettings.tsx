@@ -12,7 +12,7 @@ import { fetchGeneralSettings, fetchSocialLinks, updateGeneralSettings, updateSo
 const AdminSettings = () => {
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
     id: '',
-    siteTitle: "CallToActions",
+    siteTitle: "TBD",
     siteTagline: "We Create Digital Experiences That Convert",
     adminEmail: "rohitparakh4@gmail.com",
     phoneNumber: "+1 (555) 123-4567",

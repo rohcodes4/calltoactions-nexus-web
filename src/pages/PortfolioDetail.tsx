@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import BulletPoints from '@/components/home/BulletPoints';
 
 const PortfolioDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -175,20 +176,20 @@ const PortfolioDetail = () => {
                 {project.challenges && (
                   <div className="mb-6">
                     <h2 className="text-xl font-semibold text-white mb-3">The Challenge</h2>
-                    <p className="text-gray-300 leading-relaxed">{project.challenges}</p>
+                    <p className="text-gray-300 leading-relaxed"><BulletPoints text={project.challenges}/></p>
                   </div>
                 )}
                 
                 {project.solutions && (
                   <div className="mb-6">
                     <h2 className="text-xl font-semibold text-white mb-3">The Solution</h2>
-                    <p className="text-gray-300 leading-relaxed">{project.solutions}</p>
+                    <p className="text-gray-300 leading-relaxed"><BulletPoints text={project.solutions}/></p>
                   </div>
                 )}
               </>
             )}
             
-            <ResultsSection portfolio={project} />
+            {/* <ResultsSection portfolio={project} /> */}
             
             {project.testimonial && (
               <div className="mt-10 bg-agency-darker p-6 rounded-lg border border-gray-800">

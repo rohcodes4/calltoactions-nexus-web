@@ -143,7 +143,7 @@ const Footer = () => {
         {/* Bottom Section - Copyright and CTA */}
         <div className="mt-12 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500">
-            &copy; {new Date().getFullYear()} CallToActions. All rights reserved.
+            &copy; {new Date().getFullYear()} TBD. All rights reserved.
           </p>
         </div>
       </div>

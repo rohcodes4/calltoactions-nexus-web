@@ -57,7 +57,7 @@ const HeroSection = () => {
             className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
             onClick={handleGetStarted}
           >
-            Get Started
+            Book Exploration Call
           </Button>
           <Button 
             variant="outline" 

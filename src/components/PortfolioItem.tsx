@@ -49,7 +49,7 @@ const PortfolioItem = ({
           {title}
         </h3>
         <p className={`text-gray-400 text-sm mb-4 transition-all duration-500 ${isHovered ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'}`}>
-          {description}
+          {description.slice(0,180)}...
         </p>
         <div className="flex space-x-2">
           <Link to={`/portfolio/${id}`}>

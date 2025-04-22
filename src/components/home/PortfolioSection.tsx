@@ -55,6 +55,18 @@ const PortfolioSection = () => {
                 </Link>
               </Button>
             </div>
+            <div className="mt-6 text-center">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
+              >
+                <Link to="/contact" className="flex items-center">
+                  Book a Call
+                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
+                </Link>
+              </Button>
+            </div>
           </>
         )}
       </div>

@@ -134,10 +134,11 @@ const ServicesSection = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="border-agency-purple/30 text-white hover:bg-agency-purple/10 group"
+                className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
+                // className="border-agency-purple/30 text-white hover:bg-agency-purple/10 group"
               >
-                <Link to="/services" className="flex items-center">
-                  View All Services
+                <Link to="/contact" className="flex items-center">
+                  Book a Call with Us
                   <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
                 </Link>
               </Button>

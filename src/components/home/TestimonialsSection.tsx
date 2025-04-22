@@ -15,7 +15,7 @@ const TestimonialsSection = () => {
   const fallbackTestimonials = [
     {
       id: "1",
-      quote: "CallToActions transformed our online presence completely. Their strategic approach and creative solutions helped us increase conversions by 45% within just three months.",
+      quote: "TBD transformed our online presence completely. Their strategic approach and creative solutions helped us increase conversions by 45% within just three months.",
       author: "Emma Thompson",
       position: "Marketing Director",
       company: "Elevate Inc.",
@@ -23,7 +23,7 @@ const TestimonialsSection = () => {
     },
     {
       id: "2",
-      quote: "Working with the team at CallToActions was a game-changer for our brand. Their attention to detail and innovative thinking delivered results beyond our expectations.",
+      quote: "Working with the team at TBD was a game-changer for our brand. Their attention to detail and innovative thinking delivered results beyond our expectations.",
       author: "David Chen",
       position: "CEO",
       company: "Nexus Technologies",
@@ -31,7 +31,7 @@ const TestimonialsSection = () => {
     },
     {
       id: "3",
-      quote: "The web development team at CallToActions created a seamless user experience that perfectly represents our brand values while driving significant growth in user engagement.",
+      quote: "The web development team at TBD created a seamless user experience that perfectly represents our brand values while driving significant growth in user engagement.",
       author: "Sophia Rodriguez",
       position: "Product Manager",
       company: "Wavelength Media",

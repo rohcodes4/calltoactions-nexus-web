@@ -14,7 +14,7 @@ const teamMembers = [
     socialLinks: [
       { platform: "linkedin" as const, url: "#" },
       { platform: "twitter" as const, url: "#" },
-      { platform: "email" as const, url: "mailto:alex@calltoactions.com" },
+      { platform: "email" as const, url: "mailto:alex@TBD.com" },
     ]
   },
   {
@@ -25,7 +25,7 @@ const teamMembers = [
     socialLinks: [
       { platform: "linkedin" as const, url: "#" },
       { platform: "twitter" as const, url: "#" },
-      { platform: "email" as const, url: "mailto:sarah@calltoactions.com" },
+      { platform: "email" as const, url: "mailto:sarah@TBD.com" },
     ]
   },
   {
@@ -36,7 +36,7 @@ const teamMembers = [
     socialLinks: [
       { platform: "linkedin" as const, url: "#" },
       { platform: "twitter" as const, url: "#" },
-      { platform: "email" as const, url: "mailto:michael@calltoactions.com" },
+      { platform: "email" as const, url: "mailto:michael@TBD.com" },
     ]
   },
   {
@@ -47,7 +47,7 @@ const teamMembers = [
     socialLinks: [
       { platform: "linkedin" as const, url: "#" },
       { platform: "twitter" as const, url: "#" },
-      { platform: "email" as const, url: "mailto:olivia@calltoactions.com" },
+      { platform: "email" as const, url: "mailto:olivia@TBD.com" },
     ]
   },
 ];
@@ -56,7 +56,7 @@ const milestones = [
   {
     year: "2013",
     title: "Company Founded",
-    description: "CallToActions was established with a mission to provide innovative digital solutions.",
+    description: "TBD was established with a mission to provide innovative digital solutions.",
   },
   {
     year: "2015",
@@ -111,7 +111,7 @@ const About = () => {
                 Our <span className="text-gradient">Story</span>
               </h2>
               <p className="text-gray-300 mb-6">
-                Founded in 2013, CallToActions began with a simple vision: to create digital experiences that not only look stunning but also drive real results for our clients.
+                Founded in 2013, TBD began with a simple vision: to create digital experiences that not only look stunning but also drive real results for our clients.
               </p>
               <p className="text-gray-300 mb-6">
                 Over the years, we've evolved from a small team of passionate designers to a full-service creative agency offering comprehensive solutions for businesses of all sizes. Our journey has been marked by continuous learning, innovation, and a relentless pursuit of excellence.
