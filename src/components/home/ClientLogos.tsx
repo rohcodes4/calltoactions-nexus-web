@@ -63,7 +63,7 @@ const ClientLogos = () => {
           {triplicatedLogos.map((logo, index) => (
             <div 
               key={`${logo.name}-${index}`} 
-              className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
+              className="flex items-center justify-center opacity-100 hover:opacity-100 transition-opacity duration-300"
             >
               <img 
                 src={logo.logo} 
