@@ -99,7 +99,7 @@ const ServiceDetail = () => {
                   className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
                   size="lg"
                 >
-                  Get Started
+                  Book Call
                 </Button>
               </motion.div>
             </div>
