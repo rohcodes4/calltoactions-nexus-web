@@ -37,6 +37,7 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const handleGetStarted = () => {
+    setIsMenuOpen(false);
     navigate('/contact');
   };
 
