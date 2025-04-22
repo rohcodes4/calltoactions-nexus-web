@@ -5,13 +5,19 @@ import { ArrowRight } from 'lucide-react';
 import PortfolioItem from '@/components/PortfolioItem';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPortfolio, fetchGeneralSettings } from '@/services/databaseService';
+import { useEffect, useState } from 'react';
 
 const PortfolioSection = () => {
   // Fetch portfolio items from database
+  const [filteredPortfolioItems, setFilteredPortfolioItems] = useState([]);
   const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio'],
     queryFn: fetchPortfolio
   });
+  useEffect(()=>{
+    const filteredItems = portfolioItems.filter(item=> item.featured==true) 
+    setFilteredPortfolioItems(filteredItems)
+  },[portfolioItems])
 
   // Fetch general settings
   const { data: settings } = useQuery({
@@ -38,7 +44,7 @@ const PortfolioSection = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {portfolioItems.slice(0, 3).map((item) => (
+              {filteredPortfolioItems.slice(0, 3).map((item) => (
                 <PortfolioItem key={item.id} {...item} />
               ))}
             </div>
