@@ -239,7 +239,7 @@ export type Database = {
           category: string
           challenges: string | null
           client_name: string | null
-          completion_date: string | null
+          completion_date?: string | null
           created_at: string | null
           description: string
           featured: boolean | null
