@@ -54,32 +54,27 @@ const teamMembers = [
 
 const milestones = [
   {
-    year: "2013",
+    year: "2020",
     title: "Company Founded",
     description: "TBD was established with a mission to provide innovative digital solutions.",
   },
   {
-    year: "2015",
+    year: "2021",
     title: "First Major Client",
     description: "Partnered with a Fortune 500 company for a complete digital transformation project.",
   },
   {
-    year: "2017",
+    year: "2022",
     title: "Team Expansion",
-    description: "Grew our team to 15 professionals and moved to a larger office space.",
+    description: "Grew our team to 10 professionals and moved to a larger office space.",
   },
   {
-    year: "2019",
-    title: "Industry Recognition",
-    description: "Received multiple awards for excellence in web design and digital marketing.",
-  },
-  {
-    year: "2021",
+    year: "2023",
     title: "Service Expansion",
     description: "Added video production to our service offerings to provide more comprehensive solutions.",
   },
   {
-    year: "2023",
+    year: "2024",
     title: "International Presence",
     description: "Expanded our client base to include companies from Europe and Asia.",
   },
@@ -111,7 +106,7 @@ const About = () => {
                 Our <span className="text-gradient">Story</span>
               </h2>
               <p className="text-gray-300 mb-6">
-                Founded in 2013, TBD began with a simple vision: to create digital experiences that not only look stunning but also drive real results for our clients.
+                Founded in 2020, TBD began with a simple vision: to create digital experiences that not only look stunning but also drive real results for our clients.
               </p>
               <p className="text-gray-300 mb-6">
                 Over the years, we've evolved from a small team of passionate designers to a full-service creative agency offering comprehensive solutions for businesses of all sizes. Our journey has been marked by continuous learning, innovation, and a relentless pursuit of excellence.
@@ -180,7 +175,7 @@ const About = () => {
       </section>
       
       {/* Our Team */}
-      <section className="py-20 bg-agency-dark">
+      {/* <section className="py-20 bg-agency-dark">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-white mb-6">
@@ -208,7 +203,7 @@ const About = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </section> */}
       
       {/* Timeline */}
       <section className="py-20 bg-agency-darker">
