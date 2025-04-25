@@ -438,7 +438,7 @@ const PortfolioForm = ({ isAdding, editingItem, onSave, onCancel }: PortfolioFor
           )}
         </div>
 
-        <div>
+        {/* <div>
           <label className="text-sm text-gray-300 block mb-1">Related Testimonial</label>
           <select 
             value={item.testimonial_id || ''}
@@ -452,7 +452,7 @@ const PortfolioForm = ({ isAdding, editingItem, onSave, onCancel }: PortfolioFor
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
       
       <div className="flex justify-end mt-6 space-x-2">

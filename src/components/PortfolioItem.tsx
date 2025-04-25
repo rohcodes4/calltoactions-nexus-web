@@ -41,7 +41,7 @@ const PortfolioItem = ({
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-6 transform transition-transform duration-300" style={{ transform: isHovered ? 'translateY(0)' : 'translateY(40px)' }}>
         <div className="mb-2">
-          <span className="text-xs font-semibold text-agency-purple bg-agency-purple/10 px-3 py-1 rounded-full">
+          <span className="text-xs font-semibold text-agency-purple bg-black px-3 py-1 rounded-full">
             {category}
           </span>
         </div>
