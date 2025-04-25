@@ -19,14 +19,14 @@ const portfolioSchema = z.object({
   description: z.string().min(1, "Description is required"),
   link: z.string().optional(),
   client_name: z.string().optional(),
-  completion_date: z.string().optional(),
+  completion_date: z.string().nullable().optional(),
   technologies: z.array(z.string()).optional(),
   challenges: z.string().optional(),
   solutions: z.string().optional(),
   testimonial_id: z.string().optional(),
   featured: z.boolean().optional(),
   gallery: z.array(z.string()).optional(),
-  project_duration: z.string().optional(),
+  project_duration: z.string().nullable().optional(),
   testimonial: z.string().optional(),
   testimonial_author: z.string().optional(),
 });
@@ -79,7 +79,9 @@ const PortfolioForm = ({ isAdding, editingItem, onSave, onCancel }: PortfolioFor
     try {
       portfolioSchema.parse(item);
       setErrors({});
-      return true;
+      return {
+        status: true
+      };
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -90,14 +92,18 @@ const PortfolioForm = ({ isAdding, editingItem, onSave, onCancel }: PortfolioFor
         });
         setErrors(newErrors);
       }
-      return false;
+      return {
+        status: false,
+        error: errors
+      }
     }
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
+    if (validateForm().status) {
       onSave(item);
     } else {
+      console.log(validateForm().error)
       toast({
         title: "Validation Error",
         description: "Please check the form for errors",
