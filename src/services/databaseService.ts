@@ -675,12 +675,12 @@ export const deleteProposal = async (id: string) => {
 
 export const generateProposalWithAI = async (clientId: string, prompt: string) => {
   try {
-    // Call our edge function instead of external API
-    const response = await fetch(`${supabase.supabaseUrl}/functions/v1/generate-proposal`, {
+    // Use the correct method to access Supabase URL and key
+    const response = await fetch(`${process.env.SUPABASE_URL || 'https://sqjzydohspotalhvpjpf.supabase.co'}/functions/v1/generate-proposal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.supabaseKey}`
+        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxanp5ZG9oc3BvdGFsaHZwanBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NzQxMzUsImV4cCI6MjA1OTQ1MDEzNX0.hNP1YHb1dbJCGZO36t7IybBspgd9O3YAOKBtwbpOheY'}`
       },
       body: JSON.stringify({ clientId, prompt })
     });

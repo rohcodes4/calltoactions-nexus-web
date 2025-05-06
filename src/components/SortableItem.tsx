@@ -14,7 +14,7 @@ const SortableItem = ({ id, children }: PropsWithChildren<Props>) => {
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id });
+  } = useSortable({ id: id.toString() }); // Convert id to string to match the expected type
 
   const style = {
     transform: CSS.Transform.toString(transform),
