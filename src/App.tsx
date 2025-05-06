@@ -21,6 +21,8 @@ import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useEffect } from "react";
 import SharedInvoice from './pages/SharedInvoice';
+import SharedProposal from './pages/SharedProposal';
+import NewsletterPopup from './components/NewsletterPopup';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +54,7 @@ const AnimatedRoutes = () => {
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         <Route path="/admin/*" element={<PageTransition><Admin /></PageTransition>} />
         <Route path="/invoices/shared/:token" element={<SharedInvoice />} />
+        <Route path="/proposals/shared/:token" element={<SharedProposal />} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -69,6 +72,7 @@ const App = () => (
         <Navbar />
         <main className="min-h-screen">
           <AnimatedRoutes />
+          <NewsletterPopup />
         </main>
         <Footer />
       </BrowserRouter>

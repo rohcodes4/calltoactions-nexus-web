@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useInView } from 'framer-motion';
 import { useRef } from 'react';
+import AnimatedCounter from '../AnimatedCounter';
 
 const ResultsSection = () => {
   const sectionRef = useRef(null);
@@ -16,25 +17,33 @@ const ResultsSection = () => {
   const results = [
     {
       icon: <TrendingUp size={32} className="text-agency-purple" />,
-      title: "155% Growth",
+      title: "155%",
+      suffix: "%",
+      value: 155,
       description: "Average increase in organic traffic for our clients within 6 months",
       color: "from-purple-500/20 to-purple-700/10"
     },
     {
       icon: <Users size={32} className="text-agency-blue" />,
-      title: "89% Retention",
+      title: "89%",
+      suffix: "%",
+      value: 89,
       description: "Client retention rate, reflecting our commitment to long-term partnerships",
       color: "from-blue-500/20 to-blue-700/10"
     },
     {
       icon: <BarChart3 size={32} className="text-agency-teal" />,
-      title: "43% ROI",
+      title: "43%",
+      suffix: "%",
+      value: 43,
       description: "Average return on investment for digital marketing campaigns",
       color: "from-teal-500/20 to-teal-700/10"
     },
     {
       icon: <Zap size={32} className="text-amber-500" />,
-      title: "2.5x Conversion",
+      title: "2.5x",
+      suffix: "x",
+      value: 2.5,
       description: "Average increase in conversion rates after website redesign",
       color: "from-amber-500/20 to-amber-700/10"
     }
@@ -56,7 +65,29 @@ const ResultsSection = () => {
   };
 
   return (
-    <section className="py-20 bg-agency-darker" ref={sectionRef}>
+    <section className="py-20 bg-agency-darker relative" ref={sectionRef}>
+      {/* Chart-like line that rises up */}
+      <div className="absolute left-0 right-0 bottom-0 top-0 pointer-events-none overflow-hidden">
+        <svg className="absolute left-1/2 transform -translate-x-1/2 h-full w-full" viewBox="0 0 1000 500" preserveAspectRatio="none">
+          <motion.path
+            initial={{ pathLength: 0 }}
+            animate={isInView ? { pathLength: 1 } : { pathLength: 0 }}
+            transition={{ duration: 2, ease: "easeInOut" }}
+            d="M0,500 Q250,300 500,250 T1000,100"
+            stroke="url(#gradient)"
+            strokeWidth="2"
+            fill="none"
+            strokeDasharray="5,5"
+          />
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(147, 51, 234, 0.3)" />
+              <stop offset="100%" stopColor="rgba(79, 70, 229, 0.3)" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <motion.h2 
@@ -92,7 +123,7 @@ const ResultsSection = () => {
               <div className="mb-4">
                 {result.icon}
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{result.title}</h3>
+              <AnimatedCounter endValue={result.value} suffix={result.suffix} />
               <p className="text-gray-400 text-sm">{result.description}</p>
             </motion.div>
           ))}

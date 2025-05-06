@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -160,11 +161,12 @@ export type Invoice = {
 
 export type Proposal = {
   id: string;
-  client_id: string;
+  client_id?: string;  // Make client_id optional
   title: string;
   content?: string;
   ai_generated: boolean;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   created_at?: string;
   updated_at?: string;
+  share_token?: string; // Add share_token for proposal sharing
 };

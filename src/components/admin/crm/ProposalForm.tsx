@@ -20,7 +20,6 @@ const ProposalForm = ({ proposal: initialProposal, clients, onSave, onCancel, is
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    console.log({proposal})
     e.preventDefault();
     onSave(proposal);
   };
@@ -41,14 +40,13 @@ const ProposalForm = ({ proposal: initialProposal, clients, onSave, onCancel, is
         </div>
         
         <div>
-          <label className="text-sm text-gray-300 block mb-1">Client*</label>
+          <label className="text-sm text-gray-300 block mb-1">Client (Optional)</label>
           <select 
             value={proposal.client_id || ''}
-            onChange={e => handleChange('client_id', e.target.value)}
+            onChange={e => handleChange('client_id', e.target.value || null)}
             className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-            required
           >
-            <option value="">Select a client</option>
+            <option value="">No client selected</option>
             {clients.map(client => (
               <option key={client.id} value={client.id}>
                 {client.name} {client.company ? `(${client.company})` : ''}
@@ -85,7 +83,7 @@ Provide budget details
 List any terms and conditions"
         />
         <p className="text-xs text-gray-500 mt-1">
-          You can use Markdown formatting for rich text.
+          You can use Markdown formatting for rich text. Text between **asterisks** will appear as <strong>bold</strong>.
         </p>
       </div>
       

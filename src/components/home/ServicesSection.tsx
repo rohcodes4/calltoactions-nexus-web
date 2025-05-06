@@ -1,21 +1,44 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Monitor, Code } from 'lucide-react';
+import { ArrowRight, Monitor, Code, FileText, BarChart, PenTool, Video } from 'lucide-react';
 import ServiceCard from '@/components/ServiceCard';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchServices } from '@/services/databaseService';
 import { Service } from '@/lib/supabase';
 
+// Updated icon map with all icons
 const iconMap: Record<string, JSX.Element> = {
   "Monitor": <Monitor size={24} />,
   "Code": <Code size={24} />,
-  "Video": <Monitor size={24} />,
-  "PenTool": <Monitor size={24} />,
-  "BarChart": <Monitor size={24} />,
-  "FileText": <Monitor size={24} />
+  "Video": <Video size={24} />,
+  "PenTool": <PenTool size={24} />,
+  "BarChart": <BarChart size={24} />,
+  "FileText": <FileText size={24} />
 };
+
+// Service card background colors
+const bgColors = [
+  "from-purple-500/10 to-purple-700/5",
+  "from-blue-500/10 to-blue-700/5",
+  "from-green-500/10 to-green-700/5",
+  "from-amber-500/10 to-amber-700/5",
+  "from-pink-500/10 to-pink-700/5",
+  "from-teal-500/10 to-teal-700/5",
+  "from-red-500/10 to-red-700/5",
+  "from-indigo-500/10 to-indigo-700/5"
+];
+
+// Service background images
+const bgImages = [
+  "/images/service-bg-web.jpg",
+  "/images/service-bg-design.jpg",
+  "/images/service-bg-marketing.jpg",
+  "/images/service-bg-video.jpg",
+  "/images/service-bg-social.jpg",
+  "/images/service-bg-seo.jpg"
+];
 
 export function toSlug(text: string) {
   return text
@@ -62,54 +85,6 @@ const ServicesSection = () => {
           </div>
         ) : (
           <>
-            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <motion.div 
-                className="md:col-span-2 glass-card p-8 rounded-lg bg-gradient-to-br from-agency-purple/10 to-agency-blue/5"
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="flex flex-col h-full">
-                  <div className="w-16 h-16 mb-6 bg-agency-purple/20 rounded-2xl flex items-center justify-center">
-                    <Monitor size={32} className="text-agency-purple" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-white">Web Design & Development</h3>
-                  <p className="text-gray-300 mb-6">
-                    From stunning UX/UI designs to powerful backends, we create websites and web applications that captivate and convert.
-                  </p>
-                  <div className="mt-auto">
-                    <Link to="/services/web-design" className="text-agency-purple font-medium flex items-center group">
-                      <span>Learn More</span>
-                      <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-              
-              <motion.div 
-                className="flex flex-col glass-card p-8 rounded-lg bg-gradient-to-br from-agency-blue/10 to-agency-teal/5"
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                viewport={{ once: true }}
-              >
-                <div className="w-12 h-12 mb-4 bg-agency-blue/20 rounded-xl flex items-center justify-center">
-                  <Code size={24} className="text-agency-blue" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-white">Development</h3>
-                <p className="text-gray-400 mb-4">
-                  Robust, scalable applications built with cutting-edge technology.
-                </p>
-                <div className="mt-auto">
-                  <Link to="/services/web-development" className="text-agency-blue font-medium flex items-center group">
-                    <span>Explore</span>
-                    <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </motion.div>
-            </div> */}
-            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
               {services.slice(0, 6).map((service, i) => (
                 <motion.div 
@@ -125,6 +100,8 @@ const ServicesSection = () => {
                     description={service.description}
                     icon={iconMap[service.icon] || <Monitor size={24} />}
                     link={`/services/${toSlug(service.title)}`}
+                    bgColor={bgColors[i % bgColors.length]}
+                    bgImage={bgImages[i % bgImages.length]}
                   />
                 </motion.div>
               ))}
@@ -135,7 +112,6 @@ const ServicesSection = () => {
                 variant="outline" 
                 size="lg" 
                 className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
-                // className="border-agency-purple/30 text-white hover:bg-agency-purple/10 group"
               >
                 <Link to="/contact" className="flex items-center">
                   Book a Call with Us

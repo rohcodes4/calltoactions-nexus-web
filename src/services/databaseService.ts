@@ -629,9 +629,18 @@ export const fetchProposals = async () => {
 };
 
 export const createProposal = async (proposal: Omit<Proposal, 'id'>) => {
+  // Create a clean copy of the proposal to avoid circular references
+  const cleanProposal = {
+    title: proposal.title,
+    content: proposal.content,
+    client_id: proposal.client_id || null, // Handle null client_id
+    status: proposal.status,
+    ai_generated: proposal.ai_generated
+  };
+
   const { data, error } = await supabase
     .from('proposals')
-    .insert([proposal])
+    .insert([cleanProposal])
     .select()
     .single();
   
@@ -644,9 +653,18 @@ export const createProposal = async (proposal: Omit<Proposal, 'id'>) => {
 };
 
 export const updateProposal = async (id: string, updates: Partial<Proposal>) => {
+  // Create a clean copy of the updates to avoid circular references
+  const cleanUpdates = {
+    title: updates.title,
+    content: updates.content,
+    client_id: updates.client_id || null, // Handle null client_id
+    status: updates.status,
+    ai_generated: updates.ai_generated
+  };
+
   const { data, error } = await supabase
     .from('proposals')
-    .update(updates)
+    .update(cleanUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -696,6 +714,25 @@ export const generateProposalWithAI = async (clientId: string, prompt: string) =
     console.error('Error generating proposal with AI:', error);
     throw error;
   }
+};
+
+// Share proposal
+export const shareProposal = async (id: string) => {
+  const shareToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  
+  const { data, error } = await supabase
+    .from('proposals')
+    .update({ share_token: shareToken })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error(`Error generating share token for proposal with ID ${id}:`, error);
+    throw new Error(error.message);
+  }
+  
+  return data;
 };
 
 // Invoice management

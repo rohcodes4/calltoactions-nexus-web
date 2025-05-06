@@ -109,7 +109,8 @@ const RegisterForm = () => {
           .from('users')
           .update({
             role: data.role,
-            status: data.status
+            status: data.status,
+            full_name: data.fullName
           })
           .eq('id', signUpData.user.id);
         
@@ -123,7 +124,7 @@ const RegisterForm = () => {
         });
         form.reset();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
       toast({
         title: "Registration error",

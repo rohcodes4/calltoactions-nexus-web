@@ -1,21 +1,23 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchProposals, fetchClients, createProposal, updateProposal, deleteProposal, generateProposalWithAI } from '@/services/databaseService';
+import { fetchProposals, fetchClients, createProposal, updateProposal, deleteProposal, generateProposalWithAI, shareProposal } from '@/services/databaseService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Plus, Edit, Trash2, Check, X, Bot } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, Bot, Share2, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import ProposalForm from './ProposalForm';
 import ProposalView from './ProposalView';
 import AIProposalGenerator from './AIProposalGenerator';
 import { Proposal, Client } from '@/lib/supabase';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import ReactMarkdown from 'react-markdown';
 
 const initialProposal: Proposal = {
   id: '',
-  client_id: '',
   title: '',
   content: '',
   ai_generated: false,
@@ -63,15 +65,7 @@ const ProposalManager = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string, updates: Partial<Proposal> }) => {
-      // Create a clean copy of the updates object to avoid circular references
-      const cleanUpdates = JSON.parse(JSON.stringify({
-        title: updates.title,
-        content: updates.content,
-        client_id: updates.client_id,
-        status: updates.status,
-        ai_generated: updates.ai_generated
-      }));
-      return updateProposal(id, cleanUpdates);
+      return updateProposal(id, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
@@ -88,6 +82,25 @@ const ProposalManager = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       toast({ title: "Success", description: "Proposal deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: shareProposal,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      // Create share URL
+      const shareUrl = `${window.location.origin}/proposals/shared/${data.share_token}`;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(shareUrl);
+      toast({ 
+        title: "Proposal shared", 
+        description: "Share link copied to clipboard" 
+      });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -122,16 +135,14 @@ const ProposalManager = () => {
   };
 
   const handleEdit = (proposal: Proposal) => {
-    // Create a clean copy of the proposal object to avoid circular references
-    const cleanProposal = JSON.parse(JSON.stringify({
+    setCurrentProposal({
       id: proposal.id,
       title: proposal.title,
       content: proposal.content,
       client_id: proposal.client_id,
       status: proposal.status,
       ai_generated: proposal.ai_generated
-    }));
-    setCurrentProposal(cleanProposal);
+    });
     setEditMode(true);
     setViewProposal(null);
   };
@@ -148,24 +159,10 @@ const ProposalManager = () => {
   };
 
   const handleSave = (proposal: Proposal) => {
-    // Create a clean copy of the proposal object to avoid circular references
-    toast({
-      title: "Proposal ID",
-      description: proposal.id
-    });
-    const cleanProposal = JSON.parse(JSON.stringify({
-      // id: proposal.id,
-      title: proposal.title,
-      content: proposal.content,
-      client_id: proposal.client_id,
-      status: proposal.status,
-      ai_generated: proposal.ai_generated
-    }));
-    
-    if (cleanProposal.id) {
-      updateMutation.mutate({ id: cleanProposal.id, updates: cleanProposal });
+    if (proposal.id) {
+      updateMutation.mutate({ id: proposal.id, updates: proposal });
     } else {
-      createMutation.mutate(cleanProposal);
+      createMutation.mutate(proposal);
     }
   };
 
@@ -177,6 +174,35 @@ const ProposalManager = () => {
     generateAIMutation.mutate({ clientId, prompt });
   };
 
+  const handleShare = (id: string) => {
+    shareMutation.mutate(id);
+  };
+
+  const handleDownload = (proposal: Proposal) => {
+    const doc = new jsPDF();
+    const clientInfo = proposal.client_id 
+      ? clients.find(c => c.id === proposal.client_id)
+      : null;
+    
+    // Add header
+    doc.setFontSize(20);
+    doc.text(proposal.title, 20, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Status: ${proposal.status}`, 20, 30);
+    if (clientInfo) {
+      doc.text(`Client: ${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`, 20, 35);
+    }
+    
+    // Add content - simple version that doesn't parse markdown
+    doc.setFontSize(10);
+    const contentLines = doc.splitTextToSize(proposal.content || '', 170);
+    doc.text(contentLines, 20, 45);
+    
+    // Save the PDF
+    doc.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+  };
+
   // Filter proposals based on search query, status, and client
   const filteredProposals = proposals.filter(proposal => {
     const matchesSearch = proposal.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -186,7 +212,8 @@ const ProposalManager = () => {
   });
 
   // Find client name by ID
-  const getClientName = (clientId: string) => {
+  const getClientName = (clientId?: string) => {
+    if (!clientId) return 'No client';
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Unknown Client';
   };
@@ -251,10 +278,28 @@ const ProposalManager = () => {
         <Card className="glass-card p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-white">Viewing Proposal</h2>
-            <Button variant="outline" onClick={() => setViewProposal(null)}>
-              <X size={16} className="mr-2" />
-              Close
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleShare(viewProposal.id)}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                <Share2 size={16} className="mr-2" />
+                Share
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleDownload(viewProposal)}
+                className="text-green-400 hover:text-green-300"
+              >
+                <Download size={16} className="mr-2" />
+                Download
+              </Button>
+              <Button variant="outline" onClick={() => setViewProposal(null)}>
+                <X size={16} className="mr-2" />
+                Close
+              </Button>
+            </div>
           </div>
           <ProposalView 
             proposal={viewProposal} 
@@ -293,6 +338,7 @@ const ProposalManager = () => {
             </SelectTrigger>
             <SelectContent className="bg-agency-darker border-white/10 text-white">
               <SelectItem value="all">All Clients</SelectItem>
+              <SelectItem value="none">No Client</SelectItem>
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
               ))}
@@ -353,6 +399,22 @@ const ProposalManager = () => {
                       className="border-white/10"
                     >
                       View
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleShare(proposal.id)}
+                      className="border-white/10 text-blue-500 hover:text-blue-400"
+                    >
+                      <Share2 size={14} />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload(proposal)}
+                      className="border-white/10 text-green-500 hover:text-green-400"
+                    >
+                      <Download size={14} />
                     </Button>
                     <Button 
                       variant="outline" 
