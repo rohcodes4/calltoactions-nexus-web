@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchPortfolio, fetchGeneralSettings } from '@/services/databaseService';
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import CalendlyPopup from '../CalendlyPopup';
 
 const PortfolioSection = () => {
   // Fetch portfolio items from database
@@ -85,7 +86,8 @@ const PortfolioSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Featured <span className="text-gradient">Projects</span>
+           
+         <span className="text-gradient">Success Stories</span> That Speak for Themselves
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
             {settings ? `Explore our latest work at ${settings.siteTitle} and see how we've helped brands achieve their goals.` : 'Explore our latest work and see how we\'ve helped brands achieve their goals.'}
@@ -199,6 +201,7 @@ const PortfolioSection = () => {
           </>
         )}
       </div>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
     </section>
   );
 };

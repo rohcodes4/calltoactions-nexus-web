@@ -43,7 +43,7 @@ const ClientLogos = () => {
     <section className="py-12 bg-agency-darker overflow-hidden">
       <div className="container mx-auto px-4 mb-6">
         <h3 className="text-xl md:text-2xl font-bold text-center text-white mb-4">
-          Trusted by <span className="text-gradient">Leading Brands</span>
+        Leading Brands <span className="text-gradient">Achieve More With Us</span>
         </h3>
       </div>
       

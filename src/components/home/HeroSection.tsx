@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
 import ThreeScene from '@/components/ThreeScene';
+import CalendlyPopup from '../CalendlyPopup';
 
 const HeroSection = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [showCalendly, setShowCalendly] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +25,8 @@ const HeroSection = () => {
   }, []);
 
   const handleGetStarted = () => {
-    navigate('/contact');
+    // navigate('/contact');
+    setShowCalendly(true)
   };
 
   const scrollToNextSection = () => {
@@ -81,6 +84,7 @@ const HeroSection = () => {
           </button>
         </div>
       </div>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
     </section>
   );
 };

@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { fetchServices } from '@/services/databaseService';
 import { Service } from '@/lib/supabase';
+import CalendlyPopup from '../CalendlyPopup';
+import { useState } from 'react';
 
 // Updated icon map with all icons
 const iconMap: Record<string, JSX.Element> = {
@@ -67,12 +69,16 @@ const ServicesSection = () => {
     })
   };
 
+    const [showCalendly, setShowCalendly] = useState(false);
+  
+
   return (
     <section id="services" className="py-20 bg-agency-darker">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Our <span className="text-gradient">Services</span>
+          
+          What We Do to <span className="text-gradient">Grow Your Business</span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
             We offer comprehensive creative solutions to help your brand stand out in the digital landscape.
@@ -113,15 +119,16 @@ const ServicesSection = () => {
                 size="lg" 
                 className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all px-8"
               >
-                <Link to="/contact" className="flex items-center">
+                <div onClick={()=>setShowCalendly(true)} className="flex items-center">
                   Book a Call with Us
                   <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
-                </Link>
+                </div>
               </Button>
             </div>
           </>
         )}
       </div>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
     </section>
   );
 };

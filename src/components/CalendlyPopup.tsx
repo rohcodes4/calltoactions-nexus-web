@@ -41,7 +41,7 @@ const CalendlyPopup = ({ isOpen, onClose }: CalendlyPopupProps) => {
             <div className="h-[80vh] overflow-hidden">
               {/* Replace with your Calendly embed link */}
               <iframe
-                src="https://calendly.com/your-calendly-link"
+                src="https://calendly.com/rohcodes/30min"
                 width="100%"
                 height="100%"
                 frameBorder="0"

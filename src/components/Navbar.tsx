@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import CalendlyPopup from './CalendlyPopup';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showCalendly, setShowCalendly] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,7 +40,8 @@ const Navbar = () => {
 
   const handleGetStarted = () => {
     setIsMenuOpen(false);
-    navigate('/contact');
+    // navigate('/contact');
+    setShowCalendly(true);
   };
 
   return (
@@ -124,6 +127,8 @@ const Navbar = () => {
           </Button>
         </div>
       </div>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
+
     </nav>
   );
 };

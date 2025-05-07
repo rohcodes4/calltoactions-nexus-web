@@ -64,7 +64,8 @@ const ProcessSection = () => {
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
           >
-            Our <span className="text-gradient">Process</span>
+            
+            How We <span className="text-gradient">Deliver Results</span>
           </motion.h2>
           <motion.p 
             className="text-gray-400 max-w-2xl mx-auto"
