@@ -29,7 +29,9 @@ const Portfolio = () => {
     if (portfolioItems.length > 0) {
       const uniqueCategories = ['All', ...new Set(portfolioItems.map(item => item.category))];
       setCategories(uniqueCategories);
-      setFilteredItems(portfolioItems);
+      setFilteredItems(portfolioItems.sort((a, b) => a.order - b.order));
+      
+
     }
   }, [portfolioItems]);
   
@@ -42,7 +44,7 @@ const Portfolio = () => {
       if (category === "All") {
         setFilteredItems(portfolioItems);
       } else {
-        setFilteredItems(portfolioItems.filter(item => item.category === category));
+        setFilteredItems(portfolioItems.filter(item => item.category === category).sort((a, b) => a.order - b.order));
       }
       setIsAnimating(false);
     }, 300);

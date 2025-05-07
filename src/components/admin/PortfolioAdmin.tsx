@@ -21,6 +21,8 @@ const PortfolioAdmin = () => {
     queryKey: ['portfolio'],
     queryFn: fetchPortfolio
   });
+  
+  portfolioItems.sort((a, b) => a.order - b.order);
 
   // Create portfolio item mutation
   const createMutation = useMutation({
