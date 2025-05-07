@@ -18,3 +18,6 @@ export function useIsMobile() {
 
   return !!isMobile
 }
+
+// Export with an alias for backward compatibility
+export { useIsMobile as useMobile }

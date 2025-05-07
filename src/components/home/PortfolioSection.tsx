@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -85,7 +84,6 @@ const PortfolioSection = () => {
                     opts={{
                       align: "start",
                       loop: true,
-                      autoPlay: true,
                     }}
                     className="w-full"
                   >
