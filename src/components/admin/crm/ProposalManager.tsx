@@ -12,8 +12,6 @@ import ProposalView from './ProposalView';
 import AIProposalGenerator from './AIProposalGenerator';
 import { Proposal, Client } from '@/lib/supabase';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import ReactMarkdown from 'react-markdown';
 
 const initialProposal: Proposal = {
   id: '',
@@ -139,6 +137,7 @@ const ProposalManager = () => {
       title: proposal.title,
       content: proposal.content,
       client_id: proposal.client_id,
+      client_name: proposal.client_name,
       status: proposal.status,
       ai_generated: proposal.ai_generated
     });
@@ -191,6 +190,8 @@ const ProposalManager = () => {
     doc.text(`Status: ${proposal.status}`, 20, 30);
     if (clientInfo) {
       doc.text(`Client: ${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`, 20, 35);
+    } else if (proposal.client_name) {
+      doc.text(`Client: ${proposal.client_name}`, 20, 35);
     }
     
     // Add content - simple version that doesn't parse markdown
@@ -206,7 +207,9 @@ const ProposalManager = () => {
   const filteredProposals = proposals.filter(proposal => {
     const matchesSearch = proposal.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || proposal.status === selectedStatus;
-    const matchesClient = selectedClient === 'all' || proposal.client_id === selectedClient;
+    const matchesClient = selectedClient === 'all' || 
+                        (selectedClient === 'none' && !proposal.client_id) || 
+                        proposal.client_id === selectedClient;
     return matchesSearch && matchesStatus && matchesClient;
   });
 

@@ -161,12 +161,13 @@ export type Invoice = {
 
 export type Proposal = {
   id: string;
-  client_id?: string;  // Make client_id optional
+  client_id?: string;
   title: string;
   content?: string;
   ai_generated: boolean;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   created_at?: string;
   updated_at?: string;
-  share_token?: string; // Add share_token for proposal sharing
+  share_token?: string;
+  client_name?: string; // Added client_name field
 };

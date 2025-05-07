@@ -65,7 +65,7 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
                 placeholder="Proposal Title"
                 className="bg-white/5 border-white/10 text-white"
               />
-              {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
+              {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message as string}</p>}
             </div>
           )}
         />
