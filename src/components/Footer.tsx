@@ -117,9 +117,9 @@ const Footer = () => {
 
           {/* Fourth Section - Newsletter */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-4">Newsletter</h4>
+            <h4 className="text-lg font-semibold text-white mb-4">Growth Tips Inside</h4>
             <p className="text-gray-400 mb-4">
-              Subscribe to our newsletter to get the latest updates and special offers.
+            Be the first to learn about innovative strategies and results-driven solutions that can transform your business.
             </p>
             <form onSubmit={handleSubmit} className="flex">
               <input

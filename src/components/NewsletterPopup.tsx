@@ -107,9 +107,9 @@ const NewsletterPopup = () => {
               
               <div className="p-8">
                 <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-bold text-white mb-2">Join Our Newsletter</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">Unlock Growth Insights Delivered to Your Inbox</h2>
                   <p className="text-gray-400">
-                    Stay updated with our latest projects, insights, and offers. 
+                    Be the first to learn about innovative strategies and results-driven solutions that can transform your business.
                     We promise not to spam your inbox!
                   </p>
                 </div>

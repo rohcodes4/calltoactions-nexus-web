@@ -228,10 +228,10 @@ const Contact = () => {
           <div className="max-w-3xl mx-auto glass-card p-8 rounded-lg">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-white mb-4">
-                Subscribe to Our <span className="text-gradient">Newsletter</span>
+                <span className="text-gradient">Growth </span>Tips Inside
               </h2>
               <p className="text-gray-400">
-                Stay updated with our latest news, insights, and special offers.
+              Be the first to learn about innovative strategies and results-driven solutions that can transform your business.
               </p>
             </div>
             <form className="flex flex-col sm:flex-row gap-4">
