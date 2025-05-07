@@ -9,10 +9,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Portfolio as PortfolioType } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Portfolio = () => {
   const { toast } = useToast();
-  
+  const isMobile = useIsMobile();
   // Fetch portfolio data
   const { data: portfolioItems = [], isLoading, error } = useQuery({
     queryKey: ['portfolio'],
@@ -154,7 +155,7 @@ const Portfolio = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <PortfolioItem {...item} />
+                    <PortfolioItem {...item} defaultHovered={isMobile} isMobile={isMobile} />
                   </motion.div>
                 ))}
               </motion.div>

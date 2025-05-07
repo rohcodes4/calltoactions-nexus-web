@@ -14,6 +14,7 @@ interface PortfolioItemProps {
   description: string;
   link: string;
   defaultHovered?: boolean;
+  isMobile?: boolean;
 }
 
 const PortfolioItem = ({
@@ -24,6 +25,7 @@ const PortfolioItem = ({
   description,
   link,
   defaultHovered = false,
+  isMobile
 }: PortfolioItemProps) => {
   const [isHovered, setIsHovered] = useState(defaultHovered);
   const formattedDescription = formatBoldText(description);
@@ -32,7 +34,7 @@ const PortfolioItem = ({
   useEffect(() => {
     setIsHovered(defaultHovered);
   }, [defaultHovered]);
-
+console.log(isMobile)
   return (
     <Card 
       className="overflow-hidden relative group h-[350px] shadow-lg transition-all duration-500 border-none"
@@ -60,10 +62,12 @@ const PortfolioItem = ({
         <h3 className="text-xl font-bold text-white mb-2 transition-all duration-300">
           {title}
         </h3>
+        {!isMobile &&
         <p 
           className={`text-gray-400 text-sm mb-4 transition-all duration-500 ${isHovered ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'}`}
           dangerouslySetInnerHTML={{ __html: formattedDescription.slice(0,180) + '...' }}
-        ></p>
+        ></p>}
+        
         <div className="flex space-x-2">
           <Link to={`/portfolio/${id}`}>
             <Button variant="outline" size="sm" className="border-agency-purple/30 text-white hover:bg-agency-purple/20 hover:text-white group">

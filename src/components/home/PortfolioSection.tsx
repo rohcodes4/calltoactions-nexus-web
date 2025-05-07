@@ -90,7 +90,7 @@ const PortfolioSection = () => {
                     <CarouselContent className="-ml-4">
                       {filteredPortfolioItems.map((item, index) => (
                         <CarouselItem key={item.id} className={`pl-4 ${isMobile ? 'basis-full' : 'basis-1/3'}`}>
-                          <PortfolioItem {...item} defaultHovered={isMobile} />
+                          <PortfolioItem {...item} defaultHovered={isMobile} isMobile={isMobile} />
                         </CarouselItem>
                       ))}
                     </CarouselContent>
