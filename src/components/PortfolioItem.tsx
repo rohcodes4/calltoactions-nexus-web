@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, ExternalLink } from "lucide-react";
+import { formatBoldText } from "@/lib/utils";
 
 interface PortfolioItemProps {
   id: string;
@@ -25,6 +26,7 @@ const PortfolioItem = ({
   defaultHovered = false,
 }: PortfolioItemProps) => {
   const [isHovered, setIsHovered] = useState(defaultHovered);
+  const formattedDescription = formatBoldText(description);
 
   // Update isHovered state if defaultHovered prop changes (for responsive adjustments)
   useEffect(() => {
@@ -58,9 +60,10 @@ const PortfolioItem = ({
         <h3 className="text-xl font-bold text-white mb-2 transition-all duration-300">
           {title}
         </h3>
-        <p className={`text-gray-400 text-sm mb-4 transition-all duration-500 ${isHovered ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'}`}>
-          {description.slice(0,180)}...
-        </p>
+        <p 
+          className={`text-gray-400 text-sm mb-4 transition-all duration-500 ${isHovered ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0 overflow-hidden'}`}
+          dangerouslySetInnerHTML={{ __html: formattedDescription.slice(0,180) + '...' }}
+        ></p>
         <div className="flex space-x-2">
           <Link to={`/portfolio/${id}`}>
             <Button variant="outline" size="sm" className="border-agency-purple/30 text-white hover:bg-agency-purple/20 hover:text-white group">

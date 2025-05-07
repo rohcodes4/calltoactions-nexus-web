@@ -1,28 +1,31 @@
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { PropsWithChildren } from "react";
+import React, { CSSProperties } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-interface Props {
+interface SortableItemProps {
   id: string | number;
+  children: React.ReactNode;
+  style?: CSSProperties;
 }
 
-const SortableItem = ({ id, children }: PropsWithChildren<Props>) => {
+const SortableItem = ({ id, children, style }: SortableItemProps) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    transition,
-  } = useSortable({ id: id.toString() }); // Convert id to string to match the expected type
+    transition
+  } = useSortable({ id: id.toString() }); // Convert id to string to fix TS error
 
-  const style = {
+  const itemStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
+    ...style
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={itemStyle} {...attributes} {...listeners}>
       {children}
     </div>
   );

@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import CalendlyPopup from '../CalendlyPopup';
 import { Portfolio } from '@/lib/supabase';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Carousel,
   CarouselContent,
@@ -21,7 +21,7 @@ import {
 const PortfolioSection = () => {
   const [filteredPortfolioItems, setFilteredPortfolioItems] = useState<Portfolio[]>([]);
   const [showCalendly, setShowCalendly] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   // Fetch portfolio items from database
   const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
@@ -35,7 +35,7 @@ const PortfolioSection = () => {
     queryFn: fetchGeneralSettings
   });
 
-  // Filter featured items
+  // Filter featured items and sort by order field
   useEffect(() => {
     // First try to get featured items
     let filteredItems = portfolioItems.filter(item => item.featured === true);
@@ -44,6 +44,13 @@ const PortfolioSection = () => {
     if (filteredItems.length === 0) {
       filteredItems = [...portfolioItems];
     }
+    
+    // Sort items by order field if available
+    filteredItems.sort((a, b) => {
+      const orderA = a.order !== null ? a.order : 1000;
+      const orderB = b.order !== null ? b.order : 1000;
+      return orderA - orderB;
+    });
     
     setFilteredPortfolioItems(filteredItems);
   }, [portfolioItems]);
@@ -78,6 +85,7 @@ const PortfolioSection = () => {
                     opts={{
                       align: "start",
                       loop: true,
+                      autoPlay: true,
                     }}
                     className="w-full"
                   >

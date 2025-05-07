@@ -247,6 +247,7 @@ export type Database = {
           id: string
           imageUrl: string
           link: string
+          order: number | null
           project_duration: string | null
           results: string[] | null
           solutions: string | null
@@ -267,6 +268,7 @@ export type Database = {
           id?: string
           imageUrl: string
           link: string
+          order?: number | null
           project_duration?: string | null
           results?: string[] | null
           solutions?: string | null
@@ -287,6 +289,7 @@ export type Database = {
           id?: string
           imageUrl?: string
           link?: string
+          order?: number | null
           project_duration?: string | null
           results?: string[] | null
           solutions?: string | null
