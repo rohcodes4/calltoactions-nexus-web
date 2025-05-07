@@ -39,7 +39,6 @@ const CalendlyPopup = ({ isOpen, onClose }: CalendlyPopupProps) => {
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-agency-purple to-agency-blue"></div>
             
             <div className="h-[80vh] overflow-hidden">
-              {/* Replace with your Calendly embed link */}
               <iframe
                 src="https://calendly.com/rohcodes/30min"
                 width="100%"

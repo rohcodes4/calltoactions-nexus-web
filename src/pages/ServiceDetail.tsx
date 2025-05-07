@@ -8,8 +8,11 @@ import { Button } from '@/components/ui/button';
 import ContactForm from '@/components/ContactForm';
 import { motion } from 'framer-motion';
 import { iconMap, parseBoldText } from '@/pages/Services';
+import { useState } from 'react';
+import CalendlyPopup from '@/components/CalendlyPopup';
 
 const ServiceDetail = () => {
+  const [showCalendly, setShowCalendly] = useState(false); 
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -93,8 +96,9 @@ const ServiceDetail = () => {
               >
                 <Button 
                   onClick={() => {
-                    const contactSection = document.getElementById('contact');
-                    contactSection?.scrollIntoView({ behavior: 'smooth' });
+                    // const contactSection = document.getElementById('contact');
+                    // contactSection?.scrollIntoView({ behavior: 'smooth' });
+                    setShowCalendly(true)
                   }}
                   className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
                   size="lg"
@@ -171,6 +175,7 @@ const ServiceDetail = () => {
           </div>
         </div>
       </section>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
     </div>
   );
 };

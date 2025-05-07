@@ -10,10 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import BulletPoints from '@/components/home/BulletPoints';
+import CalendlyPopup from '@/components/CalendlyPopup';
 
 const PortfolioDetail = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [activeImage, setActiveImage] = useState(0);
+  const [showCalendly, setShowCalendly] = useState(false); 
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['portfolio', projectId],
@@ -218,9 +220,27 @@ const PortfolioDetail = () => {
             className="order-1 lg:order-2"
           >
             {renderGallery()}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <Button 
+                  onClick={() => {
+                    // const contactSection = document.getElementById('contact');
+                    // contactSection?.scrollIntoView({ behavior: 'smooth' });
+                    setShowCalendly(true)
+                  }}
+                  className="mt-5 bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple w-full text-[18px]"
+                  size="lg"
+                >
+                  Transform Your Business Now
+                </Button>
+              </motion.div>
           </motion.div>
         </div>
       </div>
+      <CalendlyPopup isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
     </div>
   );
 };
