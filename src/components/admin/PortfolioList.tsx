@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, GripVertical } from 'lucide-react';
 import { Portfolio } from '@/lib/supabase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext, 
   closestCenter,
@@ -20,6 +20,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import SortableItem from '../SortableItem';
+import { useToast } from '@/components/ui/use-toast';
 
 interface PortfolioListProps {
   portfolioItems: Portfolio[];
@@ -29,7 +30,13 @@ interface PortfolioListProps {
 }
 
 const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: PortfolioListProps) => {
-  const [items, setItems] = useState(portfolioItems);
+  const [items, setItems] = useState<Portfolio[]>(portfolioItems);
+  const { toast } = useToast();
+
+  // Update local items when portfolioItems change from parent
+  useEffect(() => {
+    setItems(portfolioItems);
+  }, [portfolioItems]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -45,9 +52,31 @@ const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: Portfoli
       const oldIndex = items.findIndex((item) => item.id === active.id);
       const newIndex = items.findIndex((item) => item.id === over.id);
       
-      const newOrder = arrayMove(items, oldIndex, newIndex);
-      setItems(newOrder);
-      onReorder(newOrder);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+        setItems(newOrder);
+        
+        try {
+          // Make sure we have all required fields before passing to onReorder
+          const completeItems = newOrder.map(item => ({
+            ...item,
+            // Ensure these required fields are never null
+            title: item.title || "",
+            category: item.category || "",
+            description: item.description || "",
+            imageUrl: item.imageUrl || "",
+            link: item.link || ""
+          }));
+          onReorder(completeItems);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to reorder items. Please try again.",
+            variant: "destructive"
+          });
+          console.error("Error in handleDragEnd:", error);
+        }
+      }
     }
   };
 

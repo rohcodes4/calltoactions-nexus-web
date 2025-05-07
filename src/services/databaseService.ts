@@ -816,10 +816,16 @@ export const shareInvoice = async (id: string) => {
 // Add new function to reorder portfolio items
 export const reorderPortfolioItems = async (items: Portfolio[]): Promise<void> => {
   try {
-    // We'll use an array of updates for the batch operation
+    // Create updates that only include id and order fields to avoid null values
     const updates = items.map((item, index) => ({
       id: item.id,
-      order: index // Add order field to sort items
+      order: index,
+      // We need to maintain these required fields that cannot be null
+      title: item.title,
+      category: item.category,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      link: item.link
     }));
     
     // Update each item with its new order
