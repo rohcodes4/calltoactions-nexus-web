@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ interface PortfolioItemProps {
   imageUrl: string;
   description: string;
   link: string;
+  defaultHovered?: boolean;
 }
 
 const PortfolioItem = ({
@@ -21,14 +22,20 @@ const PortfolioItem = ({
   imageUrl,
   description,
   link,
+  defaultHovered = false,
 }: PortfolioItemProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(defaultHovered);
+
+  // Update isHovered state if defaultHovered prop changes (for responsive adjustments)
+  useEffect(() => {
+    setIsHovered(defaultHovered);
+  }, [defaultHovered]);
 
   return (
     <Card 
       className="overflow-hidden relative group h-[350px] shadow-lg transition-all duration-500 border-none"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => !defaultHovered && setIsHovered(true)}
+      onMouseLeave={() => !defaultHovered && setIsHovered(false)}
     >
       <div 
         className="absolute inset-0 bg-cover bg-center h-full w-full transition-all duration-500 transform group-hover:scale-110"
@@ -39,7 +46,10 @@ const PortfolioItem = ({
       <div className={`absolute inset-0 bg-gradient-to-t from-agency-darker/95 via-agency-darker/70 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-80'}`}></div>
       
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 transform transition-transform duration-300" style={{ transform: isHovered ? 'translateY(0)' : 'translateY(40px)' }}>
+      <div 
+        className="absolute bottom-0 left-0 right-0 p-6 transform transition-transform duration-300" 
+        style={{ transform: isHovered ? 'translateY(0)' : 'translateY(40px)' }}
+      >
         <div className="mb-2">
           <span className="text-xs font-semibold text-agency-purple bg-black px-3 py-1 rounded-full">
             {category}

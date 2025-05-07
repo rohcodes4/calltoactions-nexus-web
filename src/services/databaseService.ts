@@ -812,3 +812,26 @@ export const shareInvoice = async (id: string) => {
   
   return data;
 };
+
+// Add new function to reorder portfolio items
+export const reorderPortfolioItems = async (items: Portfolio[]): Promise<void> => {
+  try {
+    // We'll use an array of updates for the batch operation
+    const updates = items.map((item, index) => ({
+      id: item.id,
+      order: index // Add order field to sort items
+    }));
+    
+    // Update each item with its new order
+    const { error } = await supabase
+      .from('portfolio')
+      .upsert(updates, { onConflict: 'id' });
+      
+    if (error) throw error;
+    
+    return;
+  } catch (error) {
+    console.error('Error reordering portfolio items:', error);
+    throw error;
+  }
+};

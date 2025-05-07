@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { Portfolio } from '@/lib/supabase';
-import { fetchPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from '@/services/databaseService';
+import { fetchPortfolio, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, reorderPortfolioItems } from '@/services/databaseService';
 import PortfolioForm from './PortfolioForm';
 import PortfolioList from './PortfolioList';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -44,6 +44,25 @@ const PortfolioAdmin = () => {
     mutationFn: deletePortfolioItem,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+    }
+  });
+
+  // Reorder portfolio items mutation
+  const reorderMutation = useMutation({
+    mutationFn: reorderPortfolioItems,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      toast({
+        title: "Order updated",
+        description: "Portfolio items have been reordered successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to reorder items: ${error}`,
+        variant: "destructive"
+      });
     }
   });
 
@@ -94,6 +113,10 @@ const PortfolioAdmin = () => {
     }
   };
 
+  const handleReorder = (newOrder: Portfolio[]) => {
+    reorderMutation.mutate(newOrder);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-10">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-agency-purple"></div>
@@ -141,6 +164,7 @@ const PortfolioAdmin = () => {
         portfolioItems={portfolioItems}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onReorder={handleReorder}
       />
     </div>
   );

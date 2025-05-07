@@ -8,70 +8,26 @@ import { fetchPortfolio, fetchGeneralSettings } from '@/services/databaseService
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import CalendlyPopup from '../CalendlyPopup';
+import { Portfolio } from '@/lib/supabase';
+import { useMobile } from '@/hooks/use-mobile';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const PortfolioSection = () => {
+  const [filteredPortfolioItems, setFilteredPortfolioItems] = useState<Portfolio[]>([]);
+  const [showCalendly, setShowCalendly] = useState(false);
+  const isMobile = useMobile();
+  
   // Fetch portfolio items from database
-  const [filteredPortfolioItems, setFilteredPortfolioItems] = useState([]);
   const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio'],
     queryFn: fetchPortfolio
   });
-
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const autoplayRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Filter featured items
-  useEffect(() => {
-    const filteredItems = portfolioItems.filter(item => item.featured === true);
-    setFilteredPortfolioItems(filteredItems);
-  }, [portfolioItems]);
-  
-  // Autoplay functionality
-  useEffect(() => {
-    if (filteredPortfolioItems.length > 0) {
-      const startAutoplay = () => {
-        autoplayRef.current = setInterval(() => {
-          setCurrentSlide(prev => (prev + 1) % filteredPortfolioItems.length);
-        }, 5000); // Change slide every 5 seconds
-      };
-      
-      startAutoplay();
-      
-      // Cleanup on unmount
-      return () => {
-        if (autoplayRef.current) {
-          clearInterval(autoplayRef.current);
-        }
-      };
-    }
-  }, [filteredPortfolioItems.length]);
-  
-  // Pause autoplay on hover
-  const pauseAutoplay = () => {
-    if (autoplayRef.current) {
-      clearInterval(autoplayRef.current);
-    }
-  };
-  
-  const resumeAutoplay = () => {
-    pauseAutoplay();
-    autoplayRef.current = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % filteredPortfolioItems.length);
-    }, 5000);
-  };
-
-  // Navigation functions
-  const goToPrevSlide = () => {
-    setCurrentSlide(prev => (prev === 0 ? filteredPortfolioItems.length - 1 : prev - 1));
-    pauseAutoplay();
-    setTimeout(resumeAutoplay, 5000);
-  };
-  
-  const goToNextSlide = () => {
-    setCurrentSlide(prev => (prev + 1) % filteredPortfolioItems.length);
-    pauseAutoplay();
-    setTimeout(resumeAutoplay, 5000);
-  };
 
   // Fetch general settings
   const { data: settings } = useQuery({
@@ -79,15 +35,25 @@ const PortfolioSection = () => {
     queryFn: fetchGeneralSettings
   });
 
-  const [showCalendly, setShowCalendly] = useState(false);
+  // Filter featured items
+  useEffect(() => {
+    // First try to get featured items
+    let filteredItems = portfolioItems.filter(item => item.featured === true);
+    
+    // If no featured items, use all items
+    if (filteredItems.length === 0) {
+      filteredItems = [...portfolioItems];
+    }
+    
+    setFilteredPortfolioItems(filteredItems);
+  }, [portfolioItems]);
 
   return (
     <section className="py-20 bg-agency-dark">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-           
-         <span className="text-gradient">Success Stories</span> That Speak for Themselves
+            <span className="text-gradient">Success Stories</span> That Speak for Themselves
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
             {settings ? `Explore our latest work at ${settings.siteTitle} and see how we've helped brands achieve their goals.` : 'Explore our latest work and see how we\'ve helped brands achieve their goals.'}
@@ -100,75 +66,37 @@ const PortfolioSection = () => {
           </div>
         ) : (
           <>
-            <div 
-              className="relative overflow-hidden"
-              onMouseEnter={pauseAutoplay}
-              onMouseLeave={resumeAutoplay}
-            >
-              {/* Navigation Arrows */}
-              {filteredPortfolioItems.length > 1 && (
-                <>
-                  <Button
-                    onClick={goToPrevSlide}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 rounded-full"
-                    size="icon"
-                  >
-                    <ArrowLeft size={20} />
-                  </Button>
-                  <Button
-                    onClick={goToNextSlide}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 rounded-full" 
-                    size="icon"
-                  >
-                    <ArrowRight size={20} />
-                  </Button>
-                </>
-              )}
-              
-              {/* Portfolio Slider */}
-              <div className="flex items-center justify-center">
+            <div className="relative">
+              {filteredPortfolioItems.length > 0 ? (
                 <motion.div
-                  className="w-full md:w-5/6 lg:w-3/4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
+                  className="w-full"
                 >
-                  {filteredPortfolioItems.length > 0 ? (
-                    <motion.div
-                      key={currentSlide}
-                      initial={{ opacity: 0, x: 100 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      transition={{ duration: 0.5 }}
-                      className="w-full px-4"
-                    >
-                      <PortfolioItem {...filteredPortfolioItems[currentSlide]} />
-                    </motion.div>
-                  ) : (
-                    <div className="text-center py-10 text-gray-400">
-                      No featured projects available.
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                    className="w-full"
+                  >
+                    <CarouselContent className="-ml-4">
+                      {filteredPortfolioItems.map((item, index) => (
+                        <CarouselItem key={item.id} className={`pl-4 ${isMobile ? 'basis-full' : 'basis-1/3'}`}>
+                          <PortfolioItem {...item} defaultHovered={isMobile} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <div className="hidden md:flex">
+                      <CarouselPrevious className="left-4" />
+                      <CarouselNext className="right-4" />
                     </div>
-                  )}
+                  </Carousel>
                 </motion.div>
-              </div>
-              
-              {/* Pagination Dots */}
-              {filteredPortfolioItems.length > 1 && (
-                <div className="flex justify-center mt-6">
-                  {filteredPortfolioItems.map((_, index) => (
-                    <button
-                      key={index}
-                      className={`mx-1 w-3 h-3 rounded-full transition-all ${
-                        currentSlide === index ? 'bg-agency-purple scale-125' : 'bg-gray-600'
-                      }`}
-                      onClick={() => {
-                        setCurrentSlide(index);
-                        pauseAutoplay();
-                        setTimeout(resumeAutoplay, 5000);
-                      }}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
-                  ))}
+              ) : (
+                <div className="text-center py-10 text-gray-400">
+                  No featured projects available.
                 </div>
               )}
             </div>

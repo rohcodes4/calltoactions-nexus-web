@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Monitor, Code, FileText, BarChart, PenTool, Video } from 'lucide-react';
@@ -69,7 +68,7 @@ const ServicesSection = () => {
     })
   };
 
-    const [showCalendly, setShowCalendly] = useState(false);
+  const [showCalendly, setShowCalendly] = useState(false);
   
 
   return (
