@@ -3,6 +3,7 @@ import React from 'react';
 import { Proposal } from '@/lib/supabase';
 import { Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
+import { formatProposalContent } from '@/lib/utils';
 
 interface ProposalViewProps {
   proposal: Proposal;
@@ -51,9 +52,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ proposal, client }) => {
       
       <div className="bg-white/5 p-6 rounded-lg">
         <div className="prose prose-invert max-w-none">
-          {proposal.content?.split('\n').map((paragraph, index) => (
-            <p key={index} className="mb-4 text-gray-300">{paragraph}</p>
-          ))}
+          <div dangerouslySetInnerHTML={{ __html: formatProposalContent(proposal.content || '') }} />
         </div>
       </div>
       

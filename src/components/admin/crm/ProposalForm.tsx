@@ -1,141 +1,216 @@
 
-import { useState } from 'react';
-import { Proposal, Client } from '@/lib/supabase';
+import React, { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Save, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Client, Proposal } from '@/lib/supabase';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Bot } from 'lucide-react';
 
 interface ProposalFormProps {
   proposal: Proposal;
   clients: Client[];
   onSave: (proposal: Proposal) => void;
   onCancel: () => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
-const ProposalForm = ({ proposal: initialProposal, clients, onSave, onCancel, isLoading }: ProposalFormProps) => {
-  const [proposal, setProposal] = useState<Proposal>(initialProposal);
+const ProposalForm: React.FC<ProposalFormProps> = ({
+  proposal,
+  clients,
+  onSave,
+  onCancel,
+  isLoading = false
+}) => {
+  const [useCustomClient, setUseCustomClient] = useState(!proposal.client_id);
+  const { control, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      id: proposal.id || '',
+      title: proposal.title || '',
+      content: proposal.content || '',
+      client_id: proposal.client_id || '',
+      client_name: proposal.client_name || '',
+      status: proposal.status || 'draft',
+      ai_generated: proposal.ai_generated || false
+    }
+  });
 
-  const handleChange = (field: keyof Proposal, value: any) => {
-    setProposal(prev => ({ ...prev, [field]: value }));
+  const watchContent = watch('content');
+  
+  const handleFormSubmit = (data: any) => {
+    // If using custom client, remove client_id
+    if (useCustomClient) {
+      data.client_id = null;
+    } else {
+      data.client_name = null;
+    }
+    
+    onSave(data as Proposal);
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(proposal);
-  };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm text-gray-300 block mb-1">Proposal Title*</label>
-          <input 
-            type="text" 
-            value={proposal.title || ''}
-            onChange={e => handleChange('title', e.target.value)}
-            className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-            placeholder="Proposal Name"
-            required
-          />
-        </div>
-        
-        <div>
-          <label className="text-sm text-gray-300 block mb-1">Client (Optional)</label>
-          <select 
-            value={proposal.client_id || ''}
-            onChange={e => handleChange('client_id', e.target.value || null)}
-            className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-          >
-            <option value="">No client selected</option>
-            {clients.map(client => (
-              <option key={client.id} value={client.id}>
-                {client.name} {client.company ? `(${client.company})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      
-      <div>
-        <label className="text-sm text-gray-300 block mb-1">Content</label>
-        <textarea 
-          value={proposal.content || ''}
-          onChange={e => handleChange('content', e.target.value)}
-          className="w-full p-2 rounded bg-white/10 border border-white/20 text-white font-mono"
-          rows={15}
-          placeholder="# Proposal Title
-
-## Overview
-Provide a brief overview of the project
-
-## Scope of Work
-- Item 1
-- Item 2
-- Item 3
-
-## Timeline
-Describe the project timeline
-
-## Budget
-Provide budget details
-
-## Terms and Conditions
-List any terms and conditions"
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <div className="space-y-4">
+        <Controller
+          name="title"
+          control={control}
+          rules={{ required: 'Title is required' }}
+          render={({ field }) => (
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Title</label>
+              <Input 
+                {...field} 
+                placeholder="Proposal Title"
+                className="bg-white/5 border-white/10 text-white"
+              />
+              {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
+            </div>
+          )}
         />
-        <p className="text-xs text-gray-500 mt-1">
-          You can use Markdown formatting for rich text. Text between **asterisks** will appear as <strong>bold</strong>.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
         <div>
-          <label className="text-sm text-gray-300 block mb-1">Status</label>
-          <select 
-            value={proposal.status}
-            onChange={e => handleChange('status', e.target.value as any)}
-            className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
-          >
-            <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
-          </select>
+          <label className="text-sm text-gray-400 mb-1 block">Client</label>
+          <div className="flex flex-col space-y-3">
+            <div className="flex gap-3">
+              <Button 
+                type="button"
+                variant={useCustomClient ? "default" : "outline"}
+                onClick={() => setUseCustomClient(true)}
+                className={`flex-1 ${useCustomClient ? 'bg-agency-purple hover:bg-agency-purple/90' : 'border-white/10'}`}
+              >
+                Custom Client
+              </Button>
+              <Button 
+                type="button"
+                variant={!useCustomClient ? "default" : "outline"}
+                onClick={() => setUseCustomClient(false)}
+                className={`flex-1 ${!useCustomClient ? 'bg-agency-purple hover:bg-agency-purple/90' : 'border-white/10'}`}
+              >
+                Existing Client
+              </Button>
+            </div>
+            
+            {useCustomClient ? (
+              <Controller
+                name="client_name"
+                control={control}
+                render={({ field }) => (
+                  <Input 
+                    {...field} 
+                    placeholder="Client/Company Name"
+                    className="bg-white/5 border-white/10 text-white"
+                  />
+                )}
+              />
+            ) : (
+              <Controller
+                name="client_id"
+                control={control}
+                render={({ field }) => (
+                  <Select 
+                    value={field.value} 
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-agency-darker border-white/10 text-white">
+                      <SelectItem value="">No client</SelectItem>
+                      {clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name} {client.company && `(${client.company})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+          </div>
         </div>
         
-        <div className="flex items-center mt-8">
-          <input 
-            type="checkbox" 
-            id="ai_generated"
-            checked={proposal.ai_generated}
-            onChange={e => handleChange('ai_generated', e.target.checked)}
-            className="rounded border-white/20 bg-white/10 text-agency-purple"
+        <Controller
+          name="status"
+          control={control}
+          rules={{ required: 'Status is required' }}
+          render={({ field }) => (
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">Status</label>
+              <Select 
+                value={field.value} 
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent className="bg-agency-darker border-white/10 text-white">
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        />
+        
+        <div>
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-sm text-gray-400 block">Content</label>
+            <div className="text-xs text-gray-400">
+              <span className="text-agency-purple">**bold text**</span> | 
+              <span className="ml-2">--- for divider</span> | 
+              <span className="ml-2"># Heading 1</span> | 
+              <span className="ml-2">## Heading 2</span> | 
+              <span className="ml-2">### Heading 3</span>
+            </div>
+          </div>
+          <Controller
+            name="content"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-4">
+                <Textarea 
+                  {...field} 
+                  placeholder="Write your proposal content here..."
+                  className="bg-white/5 border-white/10 text-white min-h-[300px]"
+                />
+                
+                {watchContent && (
+                  <Tabs defaultValue="edit">
+                    <TabsList className="bg-white/5 border-white/10">
+                      <TabsTrigger value="edit">Edit</TabsTrigger>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="edit" className="mt-2">
+                      {/* Content is shown in the textarea above */}
+                    </TabsContent>
+                    <TabsContent value="preview" className="mt-2 prose prose-invert max-w-none border border-white/10 rounded-md p-4 bg-white/5">
+                      <div dangerouslySetInnerHTML={{ 
+                        __html: watchContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/---/g, '<hr class="border-t border-white/20 my-4" />')
+                          .replace(/^# (.*?)$/gm, '<h1 class="text-3xl font-bold mb-4 text-agency-purple">$1</h1>')
+                          .replace(/^## (.*?)$/gm, '<h2 class="text-2xl font-bold mb-3 text-agency-blue">$1</h2>')
+                          .replace(/^### (.*?)$/gm, '<h3 class="text-xl font-bold mb-2 text-agency-teal">$1</h3>')
+                          .replace(/\n/g, '<br />')
+                      }} />
+                    </TabsContent>
+                  </Tabs>
+                )}
+              </div>
+            )}
           />
-          <label htmlFor="ai_generated" className="text-sm text-gray-300 ml-2">
-            AI-generated content
-          </label>
         </div>
       </div>
       
-      <div className="flex justify-end mt-6 space-x-2">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={onCancel}
-        >
-          <X size={16} className="mr-2" />
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="button" onClick={onCancel} variant="outline" className="border-white/10">
           Cancel
         </Button>
-        <Button 
-          type="submit"
-          className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-          ) : (
-            <Save size={16} className="mr-2" />
-          )}
-          Save Proposal
+        <Button type="submit" disabled={isLoading} className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple">
+          {isLoading ? 'Saving...' : proposal.id ? 'Update Proposal' : 'Create Proposal'}
         </Button>
       </div>
     </form>

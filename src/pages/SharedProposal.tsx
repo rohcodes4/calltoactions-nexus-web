@@ -7,6 +7,7 @@ import { Download } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
 import PageTransition from '@/components/PageTransition';
+import { formatBoldText } from '@/lib/utils';
 
 const SharedProposal = () => {
   const { token } = useParams();
@@ -51,25 +52,52 @@ const SharedProposal = () => {
   const handleDownload = () => {
     if (!proposal) return;
     
-    const doc = new jsPDF();
+    // Use our utility function to generate a better PDF
+    import('@/utils/pdfUtils').then(({ generatePdfBlob }) => {
+      generatePdfBlob({
+        invoice: {
+          id: proposal.id,
+          client_id: proposal.client_id || '',
+          amount: 0,
+          issued_date: new Date().toISOString(),
+          status: proposal.status
+        },
+        client: client || { 
+          id: '', 
+          name: 'Client', 
+          email: '', 
+          status: 'active'
+        },
+        companyName: "Your Agency",
+        companyEmail: "contact@youragency.com",
+        proposalContent: proposal.content,
+        proposalTitle: proposal.title
+      }).then(blob => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    });
+  };
+  
+  const formatContent = (content: string) => {
+    if (!content) return '';
     
-    // Add header
-    doc.setFontSize(20);
-    doc.text(proposal.title, 20, 20);
+    // Format bold text between ** markers
+    let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    doc.setFontSize(12);
-    doc.text(`Status: ${proposal.status}`, 20, 30);
-    if (client) {
-      doc.text(`Client: ${client.name}${client.company ? ` (${client.company})` : ''}`, 20, 35);
-    }
+    // Format dividers (---)
+    formatted = formatted.replace(/---/g, '<hr class="border-t border-white/20 my-4" />');
     
-    // Add content - simple version that doesn't parse markdown
-    doc.setFontSize(10);
-    const contentLines = doc.splitTextToSize(proposal.content || '', 170);
-    doc.text(contentLines, 20, 45);
+    // Format headings
+    formatted = formatted.replace(/^# (.*?)$/gm, '<h1 class="text-3xl font-bold mb-4 text-agency-purple">$1</h1>');
+    formatted = formatted.replace(/^## (.*?)$/gm, '<h2 class="text-2xl font-bold mb-3 text-agency-blue">$1</h2>');
+    formatted = formatted.replace(/^### (.*?)$/gm, '<h3 class="text-xl font-bold mb-2 text-agency-teal">$1</h3>');
     
-    // Save the PDF
-    doc.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    return formatted;
   };
   
   if (loading) {
@@ -106,11 +134,15 @@ const SharedProposal = () => {
                 {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
               </span>
               <h1 className="text-3xl font-bold text-white mt-2">{proposal.title}</h1>
-              {client && (
+              {client ? (
                 <p className="text-gray-400">
                   Prepared for: {client.name} {client.company && `(${client.company})`}
                 </p>
-              )}
+              ) : proposal.client_name ? (
+                <p className="text-gray-400">
+                  Prepared for: {proposal.client_name}
+                </p>
+              ) : null}
             </div>
             <Button 
               onClick={handleDownload}
@@ -122,13 +154,7 @@ const SharedProposal = () => {
           </div>
           
           <div className="prose prose-invert max-w-none">
-            <ReactMarkdown
-              components={{
-                strong: ({ node, ...props }) => <span className="font-bold text-agency-purple" {...props} />,
-              }}
-            >
-              {proposal.content || ''}
-            </ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: formatContent(proposal.content || '') }} />
           </div>
         </div>
       </div>

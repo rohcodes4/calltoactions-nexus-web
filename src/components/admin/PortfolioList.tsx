@@ -11,13 +11,17 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  MeasuringStrategy,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
+  rectSwappingStrategy
 } from '@dnd-kit/sortable';
 import SortableItem from '../SortableItem';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,6 +35,7 @@ interface PortfolioListProps {
 
 const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: PortfolioListProps) => {
   const [items, setItems] = useState<Portfolio[]>(portfolioItems);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Update local items when portfolioItems change from parent
@@ -39,14 +44,23 @@ const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: Portfoli
   }, [portfolioItems]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require a small drag distance to start
+      }
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
     
     if (over && active.id !== over.id) {
       const oldIndex = items.findIndex((item) => item.id === active.id);
@@ -58,16 +72,22 @@ const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: Portfoli
         
         try {
           // Make sure we have all required fields before passing to onReorder
-          const completeItems = newOrder.map(item => ({
+          const completeItems = newOrder.map((item, index) => ({
             ...item,
             // Ensure these required fields are never null
             title: item.title || "",
             category: item.category || "",
             description: item.description || "",
             imageUrl: item.imageUrl || "",
-            link: item.link || ""
+            link: item.link || "",
+            order: index // Update the order based on the new position
           }));
           onReorder(completeItems);
+          
+          toast({
+            title: "Order updated",
+            description: "Portfolio items have been reordered successfully.",
+          });
         } catch (error) {
           toast({
             title: "Error",
@@ -85,16 +105,24 @@ const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: Portfoli
     setItems(portfolioItems);
   }
 
+  const activeItem = activeId ? items.find(item => item.id === activeId) : null;
+
   return (
     <div>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always
+          }
+        }}
       >
         <SortableContext 
           items={items.map(item => item.id)}
-          strategy={verticalListSortingStrategy}
+          strategy={rectSwappingStrategy}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map(item => (
@@ -148,6 +176,28 @@ const PortfolioList = ({ portfolioItems, onEdit, onDelete, onReorder }: Portfoli
             ))}
           </div>
         </SortableContext>
+        
+        <DragOverlay>
+          {activeId && activeItem ? (
+            <Card className="glass-card overflow-hidden relative opacity-80 shadow-xl">
+              <div className="h-48 relative">
+                <img 
+                  src={activeItem.imageUrl} 
+                  alt={activeItem.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Image+Not+Found';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-agency-darker to-transparent opacity-70"></div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-xl font-bold text-white mb-1">{activeItem.title}</h3>
+                <p className="text-sm text-agency-purple mb-2">{activeItem.category}</p>
+              </div>
+            </Card>
+          ) : null}
+        </DragOverlay>
       </DndContext>
       {items.length === 0 && (
         <div className="text-center py-10 text-gray-400">

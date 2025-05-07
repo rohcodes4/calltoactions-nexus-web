@@ -717,22 +717,47 @@ export const generateProposalWithAI = async (clientId: string, prompt: string) =
 };
 
 // Share proposal
-export const shareProposal = async (id: string) => {
-  const shareToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  
-  const { data, error } = await supabase
-    .from('proposals')
-    .update({ share_token: shareToken })
-    .eq('id', id)
-    .select()
-    .single();
-  
-  if (error) {
-    console.error(`Error generating share token for proposal with ID ${id}:`, error);
-    throw new Error(error.message);
+export const shareProposal = async (id: string): Promise<{ share_token: string }> => {
+  try {
+    // First check if proposal exists
+    const { data: proposal, error: fetchError } = await supabase
+      .from('proposals')
+      .select('id, share_token')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) throw fetchError;
+
+    // If proposal already has a share token, return it
+    if (proposal.share_token) {
+      return { share_token: proposal.share_token };
+    }
+    
+    // Generate a share token
+    const shareToken = generateUUID();
+    
+    // Update the proposal with the share token
+    const { error } = await supabase
+      .from('proposals')
+      .update({ share_token: shareToken })
+      .eq('id', id);
+      
+    if (error) throw error;
+    
+    return { share_token: shareToken };
+  } catch (error) {
+    console.error("Error sharing proposal:", error);
+    throw new Error(`Failed to share proposal: ${error}`);
   }
-  
-  return data;
+};
+
+// Generate UUID function for share tokens
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, 
+        v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 };
 
 // Invoice management

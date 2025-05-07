@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchProposals, fetchClients, createProposal, updateProposal, deleteProposal, generateProposalWithAI, shareProposal } from '@/services/databaseService';
@@ -212,7 +211,8 @@ const ProposalManager = () => {
   });
 
   // Find client name by ID
-  const getClientName = (clientId?: string) => {
+  const getClientName = (clientId?: string, clientName?: string) => {
+    if (clientName) return clientName;
     if (!clientId) return 'No client';
     const client = clients.find(c => c.id === clientId);
     return client ? client.name : 'Unknown Client';
@@ -303,7 +303,7 @@ const ProposalManager = () => {
           </div>
           <ProposalView 
             proposal={viewProposal} 
-            client={getClientName(viewProposal.client_id)}
+            client={getClientName(viewProposal.client_id, viewProposal.client_name)}
           />
         </Card>
       ) : null}
@@ -369,7 +369,9 @@ const ProposalManager = () => {
                       />
                       <h3 className="text-lg font-semibold text-white">{proposal.title}</h3>
                     </div>
-                    <p className="text-sm text-gray-400">Client: {getClientName(proposal.client_id)}</p>
+                    <p className="text-sm text-gray-400">
+                      Client: {getClientName(proposal.client_id, proposal.client_name)}
+                    </p>
                     {proposal.ai_generated && (
                       <span className="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded-full">
                         AI Generated
