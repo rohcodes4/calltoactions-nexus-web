@@ -71,6 +71,7 @@ const PortfolioAdmin = () => {
   const handleEdit = (item: Portfolio) => {
     setEditingItem({ ...item });
     setIsAdding(false);
+    window.scrollTo(0,0)
   };
 
   const handleAdd = () => {
