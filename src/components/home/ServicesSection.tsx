@@ -106,7 +106,8 @@ const ServicesSection = () => {
                     icon={iconMap[service.icon] || <Monitor size={24} />}
                     link={`/services/${toSlug(service.title)}`}
                     bgColor={bgColors[i % bgColors.length]}
-                    bgImage={bgImages[i % bgImages.length]}
+                    bgImage={service.gallery}
+                    // bgImage={bgImages[i % bgImages.length]}
                   />
                 </motion.div>
               ))}

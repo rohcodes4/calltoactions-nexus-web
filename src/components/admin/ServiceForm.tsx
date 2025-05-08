@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Save, Plus, Trash } from 'lucide-react';
+import { X, Save, Plus, Trash, ImageIcon } from 'lucide-react';
 import { Service } from '@/lib/supabase';
 
 interface ServiceFormProps {
@@ -17,7 +17,10 @@ interface ServiceFormProps {
 const ServiceForm = ({ isAdding, editingService, onSave, onCancel }: ServiceFormProps) => {
   const [service, setService] = useState<Service>(editingService);
   const [isValid, setIsValid] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  console.log("service")
+console.log(service)
   // List of available icons
   const icons = [
     'Monitor', 'Code', 'Video', 'PenTool', 'BarChart', 'Search',
@@ -87,6 +90,8 @@ const ServiceForm = ({ isAdding, editingService, onSave, onCancel }: ServiceForm
     }
   };
 
+ 
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,6 +128,49 @@ const ServiceForm = ({ isAdding, editingService, onSave, onCancel }: ServiceForm
           </Select>
         </div>
       </div>
+
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Images</h3>
+        
+        <div>
+          <label className="text-sm text-gray-300 block mb-1">Main Image URL*</label>
+          <div className="flex mb-2">
+            <input 
+              type="text" 
+              value={service.gallery || ''}
+              onChange={e => setService({...service, gallery: e.target.value})}
+              className={`w-full p-2 rounded-l bg-white/10 border ${errors.gallery ? 'border-red-500' : 'border-white/20'} text-white`}
+              placeholder="https://example.com/image.jpg"
+            />
+            <button 
+              className="bg-white/10 px-3 rounded-r border border-white/20 border-l-0 text-white hover:bg-white/15"
+              onClick={() => {
+                if (service.gallery) {
+                  window.open(service.gallery, '_blank');
+                }
+              }}
+              disabled={!service.gallery}
+              type="button"
+            >
+              <ImageIcon size={16} />
+            </button>
+          </div>
+          {errors.gallery && <p className="text-red-500 text-sm mt-1">{errors.gallery}</p>}
+          
+          {service.gallery && (
+            <div className="h-40 w-full bg-white/5 rounded overflow-hidden mb-4">
+              <img 
+                src={service.gallery} 
+                alt="Preview" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://placehold.co/600x400?text=Invalid+Image+URL';
+                }}
+              />
+            </div>
+          )}
+        </div>
+        </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -206,6 +254,7 @@ const ServiceForm = ({ isAdding, editingService, onSave, onCancel }: ServiceForm
           <p className="text-sm text-gray-400">No benefits added yet.</p>
         )}
       </div>
+     
       
       <div className="flex justify-end space-x-3 pt-4">
         <Button 

@@ -45,6 +45,8 @@ const Services = () => {
     queryKey: ['services'],
     queryFn: fetchServices
   });
+  console.log("servicesData")
+  console.log(servicesData)
 
   // If error, show toast
   if (error) {
@@ -248,6 +250,7 @@ const Services = () => {
                     description={service.description}
                     icon={iconMap[service.icon] || <Monitor size={24} />}
                     link={`/services/${toSlug(service.title)}`}
+                    bgImage={service.gallery}
                   />
                 </motion.div>
               ))}
@@ -312,7 +315,9 @@ const Services = () => {
                   transition={{ duration: 0.5 }}
                   viewport={{ once: true }}
                 >
-                  <div className="aspect-video w-full bg-gradient-to-br from-agency-purple/20 to-agency-blue/20 rounded-lg flex items-center justify-center overflow-hidden group">
+                  <div className="bg-center bg-cover aspect-video w-full bg-gradient-to-br from-agency-purple/20 to-agency-blue/20 rounded-lg flex items-center justify-center overflow-hidden group"
+                    style={{ backgroundImage: `url("${service.gallery}")` }}
+                  >
                     <motion.div 
                       className="text-6xl text-agency-purple/30 transform transition-transform duration-700 ease-in-out"
                       whileHover={{ scale: 1.2, rotate: 5 }}

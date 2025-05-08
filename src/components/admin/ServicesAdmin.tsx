@@ -60,7 +60,8 @@ const ServicesAdmin = () => {
       description: "",
       icon: "FileText",
       details: "",
-      benefits: [""]
+      benefits: [""],
+      image:""
     };
     setEditingService(newService);
     setIsAdding(true);

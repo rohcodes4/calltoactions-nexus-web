@@ -50,9 +50,9 @@ const ServiceCard = ({
 
   return (
     <Card 
-      className={`glass-card overflow-hidden group transition-all duration-300 hover:shadow-purple-500/20 hover:border-agency-purple/30 h-full flex flex-col ${className}`}
+      className={`!bg-center !bg-cover glass-card overflow-hidden group transition-all duration-300 hover:shadow-purple-500/20 hover:border-agency-purple/30 h-full flex flex-col ${className}`}
       style={{
-        background: bgImage ? `linear-gradient(to bottom right, rgba(50, 50, 50, 0.9), rgba(20, 20, 20, 0.8)), url(${bgImage})` : undefined,
+        background: bgImage ? `linear-gradient(to bottom right, rgba(0,0,0,0.95), rgba(0,0,0,0.85)), url(${bgImage})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}

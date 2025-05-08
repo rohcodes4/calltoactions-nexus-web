@@ -22,6 +22,7 @@ export type Service = {
   benefits: string[];
   created_at?: string;
   slug?: string;
+  gallery?: string;
 };
 
 // Enhanced Portfolio type with new fields
