@@ -39,43 +39,7 @@ const Preloader = () => {
         >
           <div className="relative flex flex-col items-center">
             {/* Main circular loader */}
-            <motion.div 
-              className="relative w-24 h-24 mb-6"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            >
-              {/* Outer ring gradient */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-agency-purple via-agency-blue to-agency-teal opacity-30 blur-sm"></div>
-              
-              {/* Inner ring with gradient */}
-              <motion.div 
-                className="absolute inset-1 rounded-full border-4 border-transparent"
-                style={{
-                  backgroundImage: "linear-gradient(white, white), linear-gradient(to right, #7928CA, #00bfff, #4CC9F0)",
-                  backgroundOrigin: "border-box",
-                  backgroundClip: "content-box, border-box",
-                }}
-                animate={{ 
-                  boxShadow: ["0 0 10px rgba(121, 40, 202, 0.5)", "0 0 25px rgba(0, 191, 255, 0.8)", "0 0 10px rgba(121, 40, 202, 0.5)"]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              
-              {/* Center dot */}
-              <motion.div 
-                className="absolute inset-0 m-auto w-3 h-3 bg-white rounded-full"
-                animate={{ scale: [1, 1.5, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              
-              {/* Rotating ball */}
-              <motion.div 
-                className="absolute w-5 h-5 rounded-full bg-agency-purple"
-                style={{ top: 0, left: "calc(50% - 10px)", transformOrigin: "center 48px" }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              />
-            </motion.div>
+            
 
             {/* Dots loading indicator */}
             <div className="flex items-center justify-center space-x-2 mb-4">
