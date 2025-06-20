@@ -12,6 +12,7 @@ import ProposalView from './ProposalView';
 import AIProposalGenerator from './AIProposalGenerator';
 import { Proposal, Client } from '@/lib/supabase';
 import { jsPDF } from 'jspdf';
+import { formatProposalContent } from '@/lib/utils';
 
 const initialProposal: Proposal = {
   id: '',
@@ -176,32 +177,102 @@ const ProposalManager = () => {
     shareMutation.mutate(id);
   };
 
-  const handleDownload = (proposal: Proposal) => {
-    const doc = new jsPDF();
-    const clientInfo = proposal.client_id 
-      ? clients.find(c => c.id === proposal.client_id)
-      : null;
-    
-    // Add header
-    doc.setFontSize(20);
-    doc.text(proposal.title, 20, 20);
-    
-    doc.setFontSize(12);
-    doc.text(`Status: ${proposal.status}`, 20, 30);
-    if (clientInfo) {
-      doc.text(`Client: ${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`, 20, 35);
-    } else if (proposal.client_name) {
-      doc.text(`Client: ${proposal.client_name}`, 20, 35);
+
+
+const handleDownload = (proposal: Proposal) => {
+  const clientInfo = proposal.client_id
+    ? clients.find(c => c.id === proposal.client_id)
+    : null;
+
+  const clientName = clientInfo
+    ? `${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`
+    : proposal.client_name || 'Unknown';
+
+  const createdAt = proposal.created_at
+    ? new Date(proposal.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : 'Unknown date';
+
+  const statusLabel = proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1);
+  const contentHTML = formatProposalContent(proposal.content || '');
+
+  const container = document.createElement('div');
+  container.style.background = '#fff'; // force white background
+  container.style.color = '#000'; // force black text
+  // container.style.fontFamily = `'Inter', 'Helvetica Neue', Helvetica, system-ui, sans-serif`;
+  container.style.fontFamily = `'Segoe UI', Helvetica, Arial, sans-serif`;
+  container.style.fontSize = '12px';
+  container.style.lineHeight = '1.6';
+  container.style.width = '600px';
+  container.style.padding = '40px'; // uniform padding
+
+
+  container.innerHTML = `
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #000;">${proposal.title}</h1>
+    <div style="color: #000;">${contentHTML}</div>
+    ${
+      proposal.ai_generated
+        ? `<div style="margin-top: 20px; padding: 10px; background-color: #6b21a8; color: white; font-size: 12px;">
+             <strong>Note:</strong> This proposal was generated with AI assistance. Please review before sending.
+           </div>`
+        : ''
     }
+  `;
+
+  document.body.appendChild(container);
+
+  // const doc = new jsPDF('p', 'pt', 'a4');
+  const contentHeight = container.scrollHeight;
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'pt',
+    format: [595.28, contentHeight + 2], // A4 width, custom height
+  });
+  doc.html(container, {
+    callback: (pdf) => {
+      pdf.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+      document.body.removeChild(container);
+    },
+    x: 0,
+    y: 0,
+    html2canvas: {
+      scale: 1, // default resolution
+      useCORS: true
+    },
+  });
+};
+
+
+
+  // const handleDownload = (proposal: Proposal) => {
+  //   const doc = new jsPDF();
+  //   const clientInfo = proposal.client_id 
+  //     ? clients.find(c => c.id === proposal.client_id)
+  //     : null;
     
-    // Add content - simple version that doesn't parse markdown
-    doc.setFontSize(10);
-    const contentLines = doc.splitTextToSize(proposal.content || '', 170);
-    doc.text(contentLines, 20, 45);
+  //   // Add header
+  //   doc.setFontSize(20);
+  //   doc.text(proposal.title, 20, 20);
     
-    // Save the PDF
-    doc.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
-  };
+  //   doc.setFontSize(12);
+  //   doc.text(`Status: ${proposal.status}`, 20, 30);
+  //   if (clientInfo) {
+  //     doc.text(`Client: ${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`, 20, 35);
+  //   } else if (proposal.client_name) {
+  //     doc.text(`Client: ${proposal.client_name}`, 20, 35);
+  //   }
+    
+  //   // Add content - simple version that doesn't parse markdown
+  //   doc.setFontSize(10);
+  //   const contentLines = doc.splitTextToSize(proposal.content || '', 170);
+  //   doc.text(contentLines, 20, 45);
+    
+  //   // Save the PDF
+  //   doc.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+  // };
 
   // Filter proposals based on search query, status, and client
   const filteredProposals = proposals.filter(proposal => {

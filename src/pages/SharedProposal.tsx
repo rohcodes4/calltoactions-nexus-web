@@ -8,6 +8,10 @@ import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
 import PageTransition from '@/components/PageTransition';
 import { formatBoldText } from '@/lib/utils';
+import { formatProposalContent } from '@/lib/utils';
+import { Proposal, Client } from '@/lib/supabase';
+import { fetchClients } from '@/services/databaseService';
+import { useQuery } from '@tanstack/react-query';
 
 const SharedProposal = () => {
   const { token } = useParams();
@@ -15,6 +19,12 @@ const SharedProposal = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [client, setClient] = useState<any>(null);
   
+  const { data: clients = [], isLoading: isLoadingClients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: fetchClients
+  });
+
+
   useEffect(() => {
     const fetchProposal = async () => {
       try {
@@ -49,55 +59,104 @@ const SharedProposal = () => {
     }
   }, [token]);
   
-  const handleDownload = () => {
-    if (!proposal) return;
+  // const handleDownload = () => {
+  //   if (!proposal) return;
     
-    // Use our utility function to generate a better PDF
-    import('@/utils/pdfUtils').then(({ generatePdfBlob }) => {
-      generatePdfBlob({
-        invoice: {
-          id: proposal.id,
-          client_id: proposal.client_id || '',
-          amount: 0,
-          issued_date: new Date().toISOString(),
-          status: proposal.status
-        },
-        client: client || { 
-          id: '', 
-          name: 'Client', 
-          email: '', 
-          status: 'active'
-        },
-        companyName: "Your Agency",
-        companyEmail: "contact@youragency.com",
-        proposalContent: proposal.content,
-        proposalTitle: proposal.title
-      }).then(blob => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
-      });
-    });
-  };
+  //   // Use our utility function to generate a better PDF
+  //   import('@/utils/pdfUtils').then(({ generatePdfBlob }) => {
+  //     generatePdfBlob({
+  //       invoice: {
+  //         id: proposal.id,
+  //         client_id: proposal.client_id || '',
+  //         amount: 0,
+  //         issued_date: new Date().toISOString(),
+  //         status: proposal.status
+  //       },
+  //       client: client || { 
+  //         id: '', 
+  //         name: 'Client', 
+  //         email: '', 
+  //         status: 'active'
+  //       },
+  //       companyName: "Your Agency",
+  //       companyEmail: "contact@youragency.com",
+  //       proposalContent: proposal.content,
+  //       proposalTitle: proposal.title
+  //     }).then(blob => {
+  //       const url = URL.createObjectURL(blob);
+  //       const link = document.createElement('a');
+  //       link.href = url;
+  //       link.download = `proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+  //       link.click();
+  //       URL.revokeObjectURL(url);
+  //     });
+  //   });
+  // };
   
-  const formatContent = (content: string) => {
-    if (!content) return '';
-    
-    // Format bold text between ** markers
-    let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Format dividers (---)
-    formatted = formatted.replace(/---/g, '<hr class="border-t border-white/20 my-4" />');
-    
-    // Format headings
-    formatted = formatted.replace(/^# (.*?)$/gm, '<h1 class="text-3xl font-bold mb-4 text-agency-purple">$1</h1>');
-    formatted = formatted.replace(/^## (.*?)$/gm, '<h2 class="text-2xl font-bold mb-3 text-agency-blue">$1</h2>');
-    formatted = formatted.replace(/^### (.*?)$/gm, '<h3 class="text-xl font-bold mb-2 text-agency-teal">$1</h3>');
-    
-    return formatted;
+  const handleDownload = (proposal: Proposal) => {
+    const clientInfo = proposal.client_id
+      ? clients.find(c => c.id === proposal.client_id)
+      : null;
+  
+    const clientName = clientInfo
+      ? `${clientInfo.name}${clientInfo.company ? ` (${clientInfo.company})` : ''}`
+      : proposal.client_name || 'Unknown';
+  
+    const createdAt = proposal.created_at
+      ? new Date(proposal.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : 'Unknown date';
+  
+    const statusLabel = proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1);
+    const contentHTML = formatProposalContent(proposal.content || '');
+  
+    const container = document.createElement('div');
+    container.style.background = '#fff'; // force white background
+    container.style.color = '#000'; // force black text
+    // container.style.fontFamily = `'Inter', 'Helvetica Neue', Helvetica, system-ui, sans-serif`;
+    container.style.fontFamily = `'Segoe UI', Helvetica, Arial, sans-serif`;
+    container.style.fontSize = '12px';
+    container.style.lineHeight = '1.6';
+    container.style.width = '600px';
+    container.style.padding = '40px'; // uniform padding
+  
+  
+    container.innerHTML = `
+      <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #000;">${proposal.title}</h1>
+      <div style="color: #000;">${contentHTML}</div>
+      ${
+        proposal.ai_generated
+          ? `<div style="margin-top: 20px; padding: 10px; background-color: #6b21a8; color: white; font-size: 12px;">
+               <strong>Note:</strong> This proposal was generated with AI assistance. Please review before sending.
+             </div>`
+          : ''
+      }
+    `;
+  
+    document.body.appendChild(container);
+  
+    // const doc = new jsPDF('p', 'pt', 'a4');
+    const contentHeight = container.scrollHeight;
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'pt',
+      format: [595.28, contentHeight + 2], // A4 width, custom height
+    });
+    doc.html(container, {
+      callback: (pdf) => {
+        pdf.save(`proposal-${proposal.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+        document.body.removeChild(container);
+      },
+      x: 0,
+      y: 0,
+      html2canvas: {
+        scale: 1, // default resolution
+        useCORS: true
+      },
+    });
   };
   
   if (loading) {
@@ -121,9 +180,9 @@ const SharedProposal = () => {
   
   return (
     <PageTransition>
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto px-4 py-28">
         <div className="bg-agency-darker rounded-lg border border-white/10 p-6 md:p-10 mb-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8">
             <div>
               <span className={`inline-block px-3 py-1 rounded-full text-xs ${
                 proposal.status === 'draft' ? 'bg-gray-500/20 text-gray-300' :
@@ -145,7 +204,7 @@ const SharedProposal = () => {
               ) : null}
             </div>
             <Button 
-              onClick={handleDownload}
+              onClick={()=>handleDownload(proposal)}
               className="bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple mt-4 md:mt-0"
             >
               <Download size={16} className="mr-2" /> 
@@ -154,7 +213,7 @@ const SharedProposal = () => {
           </div>
           
           <div className="prose prose-invert max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: formatContent(proposal.content || '') }} />
+            <div dangerouslySetInnerHTML={{ __html: formatProposalContent(proposal.content || '') }} />
           </div>
         </div>
       </div>
