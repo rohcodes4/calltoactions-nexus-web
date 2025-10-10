@@ -23,12 +23,13 @@ const Testimonial = ({ quote, author, position, company, imageUrl }: Testimonial
         <div className="flex flex-col h-full">
           <p className="text-gray-300 mb-6 text-lg relative z-10">{quote}</p>
           <div className="mt-auto flex items-center">
-            <div className="w-12 h-12 rounded-full overflow-hidden mr-4 flex-shrink-0">
+            {/* <div className="w-12 h-12 rounded-full overflow-hidden mr-4 flex-shrink-0">
               <img src={imageUrl} alt={author} className="w-full h-full object-cover" />
-            </div>
+            </div> */}
             <div>
               <h4 className="font-bold text-white">{author}</h4>
-              <p className="text-sm text-gray-400">{position}, {company}</p>
+              {position && <p className="text-sm text-gray-400">{position}, {company}</p>}
+              {!position && <p className="text-sm text-gray-400">{company}</p>}
             </div>
           </div>
         </div>
