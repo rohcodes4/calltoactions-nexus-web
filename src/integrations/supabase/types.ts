@@ -457,6 +457,7 @@ export type Database = {
           imageurl: string
           position: string
           quote: string
+          order: number
         }
         Insert: {
           author: string
@@ -466,6 +467,8 @@ export type Database = {
           imageurl: string
           position: string
           quote: string
+          order: number
+
         }
         Update: {
           author?: string
@@ -475,6 +478,8 @@ export type Database = {
           imageurl?: string
           position?: string
           quote?: string
+          order: number
+
         }
         Relationships: []
       }

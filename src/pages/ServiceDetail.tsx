@@ -135,7 +135,7 @@ const ServiceDetail = () => {
             <div className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-8">Overview</h2>
               <div className="prose prose-invert max-w-none">
-                <p className="text-gray-300 whitespace-pre-wrap">{parseBoldText(service.details)}</p>
+                <div className="text-gray-300 whitespace-pre-wrap">{parseBoldText(service.details)}</div>
               </div>
             </div>
             

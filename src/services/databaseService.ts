@@ -151,37 +151,131 @@ export const fetchPortfolioByCategory = async (category: string) => {
   return data || [];
 };
 
-// CREATE/UPDATE/DELETE Portfolio
-export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>) => {
+// Helper to fetch existing testimonials
+const fetchAllTestimonials = async () => {
   const { data, error } = await supabase
+    .from('testimonials')
+    .select('id');
+
+  if (error) {
+    console.error('Error fetching testimonials:', error);
+    throw new Error(error.message);
+  }
+
+  return data ?? [];
+};
+
+// CREATE Portfolio + Testimonial if present
+export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>) => {
+  const { data: portfolioData, error } = await supabase
     .from('portfolio')
     .insert([item])
     .select()
     .single();
-  
+
   if (error) {
     console.error('Error creating portfolio item:', error);
     throw new Error(error.message);
   }
-  
-  return data;
+
+  // Create testimonial if present
+  if (item.testimonial && item.testimonial_author && item.client_name) {
+    const existingTestimonials = await fetchAllTestimonials();
+    const order = existingTestimonials.length;
+
+    const testimonial = {
+      quote: item.testimonial,
+      author: item.testimonial_author,
+      company: item.client_name,
+      // imageurl: item.imageurl ?? null,
+      // position: item.testimonial_position ?? null,
+      order
+    };
+
+    const { error: testimonialError } = await supabase
+      .from('testimonials')
+      .insert([testimonial]);
+
+    if (testimonialError) {
+      console.error('Error creating testimonial from portfolio:', testimonialError);
+    }
+  }
+
+  return portfolioData;
 };
 
+// UPDATE Portfolio + create Testimonial if newly added
 export const updatePortfolioItem = async (id: string, updates: Partial<Portfolio>) => {
-  const { data, error } = await supabase
+  const { data: updatedPortfolio, error } = await supabase
     .from('portfolio')
     .update(updates)
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) {
     console.error(`Error updating portfolio item with ID ${id}:`, error);
     throw new Error(error.message);
   }
-  
-  return data;
+
+  // Only add testimonial if testimonial info newly added
+  if (updates.testimonial && updates.testimonial_author && updates.client_name) {
+    const existingTestimonials = await fetchAllTestimonials();
+    const order = existingTestimonials.length;
+
+    const testimonial = {
+      quote: updates.testimonial,
+      author: updates.testimonial_author,
+      company: updates.client_name,
+      // imageurl: updates.imageurl ?? null,
+      // position: updates.testimonial_position ?? null,
+      order
+    };
+
+    const { error: testimonialError } = await supabase
+      .from('testimonials')
+      .insert([testimonial]);
+
+    if (testimonialError) {
+      console.error('Error creating testimonial during portfolio update:', testimonialError);
+    }
+  }
+
+  return updatedPortfolio;
 };
+
+
+// // CREATE/UPDATE/DELETE Portfolio
+// export const createPortfolioItem = async (item: Omit<Portfolio, 'id'>) => {
+//   const { data, error } = await supabase
+//     .from('portfolio')
+//     .insert([item])
+//     .select()
+//     .single();
+  
+//   if (error) {
+//     console.error('Error creating portfolio item:', error);
+//     throw new Error(error.message);
+//   }
+  
+//   return data;
+// };
+
+// export const updatePortfolioItem = async (id: string, updates: Partial<Portfolio>) => {
+//   const { data, error } = await supabase
+//     .from('portfolio')
+//     .update(updates)
+//     .eq('id', id)
+//     .select()
+//     .single();
+  
+//   if (error) {
+//     console.error(`Error updating portfolio item with ID ${id}:`, error);
+//     throw new Error(error.message);
+//   }
+  
+//   return data;
+// };
 
 export const deletePortfolioItem = async (id: string) => {
   const { error } = await supabase
@@ -694,11 +788,11 @@ export const deleteProposal = async (id: string) => {
 export const generateProposalWithAI = async (clientId: string, prompt: string) => {
   try {
     // Use the correct method to access Supabase URL and key
-    const response = await fetch(`${process.env.SUPABASE_URL || 'https://sqjzydohspotalhvpjpf.supabase.co'}/functions/v1/generate-proposal`, {
+    const response = await fetch(`${process.env.SUPABASE_URL || 'https://elzggwzlabarqkmjywaf.supabase.co'}/functions/v1/generate-proposal`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxanp5ZG9oc3BvdGFsaHZwanBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NzQxMzUsImV4cCI6MjA1OTQ1MDEzNX0.hNP1YHb1dbJCGZO36t7IybBspgd9O3YAOKBtwbpOheY'}`
+        'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsemdnd3psYWJhcnFrbWp5d2FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MzM2MzEsImV4cCI6MjA3NTIwOTYzMX0.KO-ERCy49q7283AR8OZryAZAqoOqk4uwcLcTKCAGBds'}`
       },
       body: JSON.stringify({ clientId, prompt })
     });

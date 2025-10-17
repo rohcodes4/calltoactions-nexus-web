@@ -23,17 +23,24 @@ export const iconMap: Record<string, JSX.Element> = {
 };
 
 export const parseBoldText = (text: any) => {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <div key={index} style={{ marginTop: '1rem' }}>
-          <strong>{part.slice(2, -2)}</strong>
-        </div>
-      );
-    }
-    return <span key={index}>{part}</span>;
-  });
+   // Split on number + dot + space (lookahead to preserve delimiter)
+   const sections = text.split(/(?=\d+\.\s)/g);
+
+   return sections.map((section, sectionIndex) => {
+     // Inside each section, split to parse bold parts
+     const parts = section.split(/(\*\*[^*]+\*\*)/g);
+ 
+     return (
+       <div key={sectionIndex} style={{ marginTop: '1rem' }}>
+         {parts.map((part, partIndex) => {
+           if (part.startsWith('**') && part.endsWith('**')) {
+             return <strong key={partIndex}>{part.slice(2, -2)}</strong>;
+           }
+           return <span key={partIndex}>{part}</span>;
+         })}
+       </div>
+     );
+   });
 };
 
 const Services = () => {
@@ -130,6 +137,7 @@ const Services = () => {
       ]
     }
   ];
+
 
   const handleSectionInView = (id: string) => {
     setActiveSection(id);
@@ -309,7 +317,7 @@ const Services = () => {
                   </Link>
                 </div>
                 <motion.div 
-                  className="lg:w-1/2 glass-card p-6 rounded-lg border border-white/5"
+                  className="lg:w-1/2 h-max glass-card p-6 rounded-lg border border-white/5"
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}

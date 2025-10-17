@@ -31,6 +31,7 @@ import InvoiceManager from '@/components/admin/crm/InvoiceManager';
 import RegisterForm from '@/components/admin/RegisterForm';
 import { supabase } from '@/lib/supabase';
 import LogosAdmin from '@/components/admin/LogosAdmin';
+import TestimonialsAdmin from '@/components/admin/TestimonialsAdmin';
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -250,6 +251,7 @@ const Admin = () => {
                   <option value="/admin/services">Services</option>
                   <option value="/admin/portfolio">Portfolio</option>
                   <option value="/admin/logos">Client Logo's</option>
+                  <option value="/admin/testimonials">Testimonials</option>
                   <option value="/admin/messages">Messages</option>
                   <option value="/admin/newsletter">Newsletter</option>
                   <option value="/admin/clients">Clients</option>
@@ -299,6 +301,18 @@ const Admin = () => {
                 >
                   <Mail size={18} className="mr-3" />
                   <span>Client Logo's</span>
+                </Link>
+              
+                <Link 
+                  to="/admin/testimonials" 
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    location.pathname.includes('/admin/testimonials') 
+                      ? 'bg-agency-purple/20 text-white' 
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Mail size={18} className="mr-3" />
+                  <span>Testimonials</span>
                 </Link>
                 
                 <Link 
@@ -430,6 +444,7 @@ const Admin = () => {
               <Route path="/services/*" element={<ServicesAdmin />} />
               <Route path="/portfolio/*" element={<PortfolioAdmin />} />
               <Route path="/logos" element={<LogosAdmin />} />
+              <Route path="/testimonials" element={<TestimonialsAdmin />} />
               <Route path="/messages" element={<ContactSubmissions />} />
               <Route path="/newsletter" element={<NewsletterManager />} />
               <Route path="/users" element={<AdminUsers />} />

@@ -11,7 +11,7 @@ import {
 import * as THREE from "three";
 
 // Floating 3D text component
-const FloatingText = ({ position = [0, 0, 0], text = "TBD" }) => {
+const FloatingText = ({ position = [0, 0, 0], text = "Rohcodes" }) => {
   const textRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
