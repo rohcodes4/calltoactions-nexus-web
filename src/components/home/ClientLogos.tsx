@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Marquee from 'react-fast-marquee';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
+import ColorThief from 'colorthief';
 
 type ClientLogo = Tables<'client_logos'>;
 
@@ -12,6 +13,7 @@ const ClientLogos = () => {
   const logoGap = 48; // Gap between logos in pixels (you can tweak this)
 
   const [scrollSpeed, setScrollSpeed] = useState(desktopSpeed);
+  const [logoBackgrounds, setLogoBackgrounds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const updateSpeed = () => {
@@ -34,18 +36,41 @@ const ClientLogos = () => {
     }
   });
 
-  const fallbackLogos = [
-    { name: 'Microsoft', logo: 'https://placehold.co/200x80/101932/white?text=Microsoft' },
-    { name: 'Adobe', logo: 'https://placehold.co/200x80/101932/white?text=Adobe' },
-    { name: 'Google', logo: 'https://placehold.co/200x80/101932/white?text=Google' },
-    { name: 'Amazon', logo: 'https://placehold.co/200x80/101932/white?text=Amazon' },
-    { name: 'IBM', logo: 'https://placehold.co/200x80/101932/white?text=IBM' },
-    { name: 'Apple', logo: 'https://placehold.co/200x80/101932/white?text=Apple' },
-  ];
 
   const displayLogos = logos.length > 0
     ? logos.map((logo) => ({ name: logo.name, logo: logo.image_url }))
-    : fallbackLogos;
+    : null;
+    const imgRefs = useRef<Record<string, HTMLImageElement | null>>({});
+
+    useEffect(() => {
+      logos.forEach((logo) => {
+        const imgElement = imgRefs.current[logo.name];
+        if (imgElement && imgElement.complete) {
+          extractColor(logo.name, imgElement);
+        } else if (imgElement) {
+          imgElement.onload = () => extractColor(logo.name, imgElement);
+        }
+      });
+    }, [logos]);
+  
+    const extractColor = (name: string, img: HTMLImageElement) => {
+      try {
+        const colorThief = new ColorThief();
+        const color = colorThief.getColor(img);
+        const contrastColor = getContrastingColor(color);
+        setLogoBackgrounds(prev => ({ ...prev, [name]: contrastColor }));
+      } catch (e) {
+        console.error(`Error extracting color for ${name}:`, e);
+      }
+    };
+    
+  
+    const getContrastingColor = (rgb: number[]) => {
+      // Calculate luminance
+      const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+      // Return black or white based on luminance for contrast
+      return luminance > 0.5 ? '#000' : '#fff';
+    };
 
   return (
     <section className="py-12 bg-agency-darker overflow-hidden">
@@ -62,18 +87,19 @@ const ClientLogos = () => {
         loop={0}
         className="flex items-center"
       >
-        {displayLogos.map((logo, index) => (
+        {displayLogos?.map((logo, index) => (
           <div
             key={`${logo.name}-${index}`}
-            style={{ marginRight: `${logoGap}px` }}
-            className="mx-6 flex items-center justify-center"
+            style={{ marginRight: `${logoGap}px`, backgroundColor: logoBackgrounds[logo.name] || 'transparent' }}
+            className="mx-6 flex items-center justify-center px-2 py-1 rounded"
           >
             <img
-              src={logo.logo}
-              alt={`${logo.name} logo`}
-              className="h-16 object-contain w-auto"
-              style={{ maxWidth: '100%' }}
-            />
+  src={logo.logo}
+  alt={`${logo.name} logo`}
+  className="h-16 object-contain w-auto"
+  crossOrigin="anonymous" // Add this
+  ref={(el) => (imgRefs.current[logo.name] = el)}
+/>
           </div>
         ))}
       </Marquee>
