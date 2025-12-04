@@ -17,15 +17,23 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-const PortfolioSection = () => {
+
+interface PortfolioSectionProps {
+  category?: string;
+  featured?: boolean | null;
+  limit?: number;
+}
+
+
+const PortfolioSection = ({category, featured, limit=3}:PortfolioSectionProps )=> {
   const [filteredPortfolioItems, setFilteredPortfolioItems] = useState<Portfolio[]>([]);
   const [showCalendly, setShowCalendly] = useState(false);
   const isMobile = useIsMobile();
   
   // Fetch portfolio items from database
   const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
-    queryKey: ['portfolio'],
-    queryFn: () => fetchPortfolio(3, true)
+    queryKey: ['portfolio', { category, featured, limit }],
+    queryFn: () => fetchPortfolio(limit, featured, category)
   });
 
   // Fetch general settings
@@ -34,26 +42,47 @@ const PortfolioSection = () => {
     queryFn: fetchGeneralSettings
   });
 
-  // Filter featured items and sort by order field
   useEffect(() => {
-    // First try to get featured items
-    let filteredItems = portfolioItems.filter(item => item.featured === true);
-    
-    // If no featured items, use all items
-    if (filteredItems.length === 0) {
-      filteredItems = [...portfolioItems];
-    }
-    
-    // Sort items by order field if available
-    filteredItems.sort((a, b) => {
-      const orderA = a.order !== null ? a.order : 1000;
-      const orderB = b.order !== null ? b.order : 1000;
-      return orderA - orderB;
+    const sorted = [...portfolioItems].sort((a, b) => {
+      // 1) Featured first
+      if (a.featured === b.featured) {
+        // 2) If both same featured status, sort by order (nulls last)
+        const orderA = a.order !== null && a.order !== undefined ? a.order : 1000;
+        const orderB = b.order !== null && b.order !== undefined ? b.order : 1000;
+        return orderA - orderB;
+      }
+  
+      // true first, false later
+      return a.featured ? -1 : 1;
     });
-    
-    setFilteredPortfolioItems(filteredItems);
+  
+    setFilteredPortfolioItems(sorted);
   }, [portfolioItems]);
 
+  
+  // // Filter featured items and sort by order field
+  // useEffect(() => {
+  //   // First try to get featured items
+  //   let filteredItems = featured?portfolioItems.filter(item => item.featured === true):portfolioItems;
+    
+  //   // If no featured items, use all items
+  //   if (filteredItems.length === 0) {
+  //     filteredItems = [...portfolioItems];
+  //   }
+    
+  //   // Sort items by order field if available
+  //   filteredItems.sort((a, b) => {
+  //     const orderA = a.order !== null ? a.order : 1000;
+  //     const orderB = b.order !== null ? b.order : 1000;
+  //     return orderA - orderB;
+  //   });
+    
+  //   setFilteredPortfolioItems(filteredItems);
+  // }, [portfolioItems]);
+
+  if(filteredPortfolioItems.length < 1){
+    return<></>
+  }
   return (
     <section className="py-20 bg-agency-dark">
       <div className="container mx-auto px-4">

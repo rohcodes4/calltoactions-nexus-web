@@ -39,7 +39,7 @@ const Home = () => {
       <ClientLogos />
       <ServicesSection />
       <ResultsSection />
-      <PortfolioSection />
+      <PortfolioSection featured={true}/>
       <ProcessSection />
       <StatsSection />
       <TestimonialsSection />

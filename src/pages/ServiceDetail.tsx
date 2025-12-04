@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { iconMap, parseBoldText } from '@/pages/Services';
 import { useState } from 'react';
 import CalendlyPopup from '@/components/CalendlyPopup';
+import PortfolioSection from '@/components/home/PortfolioSection';
 
 const ServiceDetail = () => {
   const [showCalendly, setShowCalendly] = useState(false); 
@@ -160,7 +161,7 @@ const ServiceDetail = () => {
           </div>
         </div>
       </section>
-      
+      <PortfolioSection category={service.title} featured={null}/>
       {/* CTA Section */}
       <section id="contact" className="py-20 bg-agency-darker">
         <div className="container mx-auto px-4">

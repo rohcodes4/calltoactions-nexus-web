@@ -92,7 +92,7 @@ export const deleteService = async (id: string) => {
 };
 
 // Portfolio items
-export const fetchPortfolio = async (limit?: number, featured?: boolean) => {
+export const fetchPortfolio = async (limit?: number, featured?: boolean, category?: string) => {
   let query = supabase
     .from('portfolio')
     .select('*')
@@ -104,6 +104,10 @@ export const fetchPortfolio = async (limit?: number, featured?: boolean) => {
 
   if (featured === true) {
     query = query.eq('featured', true);
+  }
+  
+  if (category) {
+    query = query.eq('category', category);
   }
   
   const { data, error } = await query;
