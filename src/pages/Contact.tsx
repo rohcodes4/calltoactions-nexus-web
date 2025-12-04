@@ -67,6 +67,8 @@ const Contact = () => {
     queryFn: fetchSocialLinks
   });
 
+  // console.log("socialData",socialData)
+
   // Update settings when data is loaded
   useEffect(() => {
     if (settingsData) {
@@ -268,21 +270,24 @@ const Contact = () => {
             </p>
           </div>
           <div className="flex justify-center space-x-6">
-            {['facebook', 'twitter', 'instagram', 'linkedin', 'youtube'].map((platform) => (
-              <a 
-                key={platform}
-                href={`https://www.${platform}.com`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-14 h-14 bg-white/5 hover:bg-agency-purple/20 rounded-full flex items-center justify-center transition-colors"
-              >
-                <img 
-                  src={`/icons/${platform}.svg`} 
-                  alt={platform} 
-                  className="w-6 h-6" 
-                />
-              </a>
-            ))}
+          {Object.entries(socialLinks)
+  .filter(([key]) => !['id', 'updated_at'].includes(key) && socialLinks[key])
+  .map(([platform, url]) => (
+    <a 
+      key={platform}
+      href={url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="w-14 h-14 bg-white/50 hover:bg-agency-purple/90 rounded-full flex items-center justify-center transition-colors"
+    >
+      <img 
+        src={`/icons/${platform}.svg`} 
+        alt={platform} 
+        className="w-6 h-6" 
+      />
+    </a>
+  ))}
+
           </div>
         </div>
       </section>
