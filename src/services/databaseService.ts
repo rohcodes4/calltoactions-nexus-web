@@ -92,11 +92,21 @@ export const deleteService = async (id: string) => {
 };
 
 // Portfolio items
-export const fetchPortfolio = async () => {
-  const { data, error } = await supabase
+export const fetchPortfolio = async (limit?: number, featured?: boolean) => {
+  let query = supabase
     .from('portfolio')
     .select('*')
     .order('created_at', { ascending: false });
+  
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+
+  if (featured === true) {
+    query = query.eq('featured', true);
+  }
+  
+  const { data, error } = await query;
   
   if (error) {
     console.error('Error fetching portfolio items:', error);
@@ -105,6 +115,7 @@ export const fetchPortfolio = async () => {
   
   return data || [];
 };
+
 
 export const fetchFeaturedPortfolio = async () => {
   const { data, error } = await supabase

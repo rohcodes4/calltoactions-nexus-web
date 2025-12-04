@@ -25,7 +25,7 @@ const PortfolioSection = () => {
   // Fetch portfolio items from database
   const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery({
     queryKey: ['portfolio'],
-    queryFn: fetchPortfolio
+    queryFn: () => fetchPortfolio(3, true)
   });
 
   // Fetch general settings
