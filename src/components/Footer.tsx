@@ -1,10 +1,12 @@
-
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchServices } from '@/services/databaseService';
+import { toSlug } from './home/ServicesSection';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -12,6 +14,12 @@ const Footer = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: servicesData = [], isLoading, error } = useQuery({
+    queryKey: ['services'],
+    queryFn: fetchServices
+  });
+
+  console.log("servicesData",servicesData)
   // Create subscription mutation
   const createSubscription = useMutation({
     mutationFn: async (email: string) => {
@@ -81,18 +89,11 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold text-white mb-4">Services</h4>
             <ul className="text-gray-400">
+            {servicesData?.map((service) => (
               <li className="mb-2">
-                <Link to="/services" className="hover:text-agency-purple transition-colors">Web Design</Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/services" className="hover:text-agency-purple transition-colors">Web Development</Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/services" className="hover:text-agency-purple transition-colors">Digital Marketing</Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/services" className="hover:text-agency-purple transition-colors">SEO Optimization</Link>
-              </li>
+              <Link to={`/services/${toSlug(service.title)}`} className="hover:text-agency-purple transition-colors">{service.title}</Link>
+            </li>             
+              ))}              
             </ul>
           </div>
 

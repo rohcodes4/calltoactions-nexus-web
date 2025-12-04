@@ -342,7 +342,7 @@ export const fetchSocialLinks = async () => {
   const { data, error } = await supabase
     .from('social_links')
     .select('*')
-    .eq('id', '1')
+    .eq('id', '0be51db6-e0fb-4ba0-99f1-8c65d0a012ab')
     .single();
   
   if (error) {
