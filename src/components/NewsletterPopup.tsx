@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,104 +12,100 @@ const NewsletterPopup = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const hasMountedRef = useRef(false);
 
-  useEffect(() => {
-    // Check if user has closed the popup before
-    const hasClosedPopup = localStorage.getItem('newsletter_popup_closed');
-    
-    if (!hasClosedPopup) {
-      // Show popup after 5 seconds
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
+  // Memoized handlers to prevent recreation
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    localStorage.setItem('newsletter_popup_closed', 'true');
   }, []);
 
-  const handleClose = () => {
-    setIsOpen(false);
-    // Save to localStorage that user has closed the popup
-    localStorage.setItem('newsletter_popup_closed', 'true');
-    
-    // Reset the flag after 7 days so the popup can show again
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 7);
-    localStorage.setItem('newsletter_popup_expiry', expiry.toString());
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email) {
-      toast({
-        title: "Error",
-        description: "Please enter your email",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please enter your email", variant: "destructive" });
       return;
     }
     
     setIsSubmitting(true);
-    
     try {
       await subscribeToNewsletter(email, name);
-      
-      toast({
-        title: "Success!",
-        description: "Thank you for subscribing to our newsletter!"
-      });
-      
-      // Close popup and mark as submitted
+      toast({ title: "Success!", description: "Thank you for subscribing!" });
       setIsOpen(false);
       localStorage.setItem('newsletter_popup_subscribed', 'true');
-      
-      // Reset form
       setName('');
       setEmail('');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to subscribe",
-        variant: "destructive"
-      });
+    } catch (error: any) {
+      // Handle duplicate subscription gracefully
+      console.log(error)
+      if (error?.code === '23505' || error?.message?.includes('newsletter_subscriptions_email_key')) {
+        toast({ 
+          title: "Already Subscribed!", 
+          description: "You're already receiving our newsletter updates.",
+          // No variant="destructive" = default success styling
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to subscribe",
+          variant: "destructive"
+        });
+      }
+      
+      setIsOpen(false); // Close popup even on duplicate
+      localStorage.setItem('newsletter_popup_subscribed', 'true');
+      setName('');
+      setEmail('');
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [email, name, toast]);
+  
+
+  useEffect(() => {
+    if (hasMountedRef.current) return;
+    hasMountedRef.current = true;
+
+    const hasClosed = localStorage.getItem('newsletter_popup_closed');
+    if (!hasClosed) {
+      const timer = setTimeout(() => setIsOpen(true), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }} // Fast fade, no spring
+          style={{ backdropFilter: 'blur(4px)' }} // CSS filter instead of heavy animation
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", damping: 25 }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }} // Simple tween, 60% faster
             className="w-full max-w-md"
           >
             <Card className="glass-card relative overflow-hidden">
               <button 
                 onClick={handleClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
               >
                 <X size={24} />
               </button>
               
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-agency-purple to-agency-blue"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-agency-purple to-agency-blue" />
               
               <div className="p-8">
                 <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-bold text-white mb-2">Unlock Growth Insights Delivered to Your Inbox</h2>
-                  <p className="text-gray-400">
-                    Be the first to learn about innovative strategies and results-driven solutions that can transform your business.
-                    We promise not to spam your inbox!
+                  <h2 className="text-2xl font-bold text-white mb-2">Unlock Growth Insights</h2>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Be the first to learn about innovative strategies. No spam!
                   </p>
                 </div>
                 
@@ -121,7 +116,7 @@ const NewsletterPopup = () => {
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-agency-purple/50 transition-colors"
                       placeholder="Your name"
                     />
                   </div>
@@ -132,7 +127,7 @@ const NewsletterPopup = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full p-2 rounded bg-white/10 border border-white/20 text-white"
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-agency-purple/50 transition-colors"
                       placeholder="your.email@example.com"
                       required
                     />
@@ -140,11 +135,14 @@ const NewsletterPopup = () => {
                   
                   <Button 
                     type="submit"
-                    className="w-full bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple"
+                    className="w-full bg-gradient-to-r from-agency-purple to-agency-blue hover:from-agency-blue hover:to-agency-purple transition-all"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      <span className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                        Subscribing...
+                      </span>
                     ) : "Subscribe Now"}
                   </Button>
                 </form>

@@ -19,7 +19,7 @@ const Footer = () => {
     queryFn: fetchServices
   });
 
-  console.log("servicesData",servicesData)
+  // console.log("servicesData",servicesData)
   // Create subscription mutation
   const createSubscription = useMutation({
     mutationFn: async (email: string) => {
