@@ -1,11 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Varsha, Will You Be My Valentine? 💖</title>
-    <link rel="stylesheet" href="./styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 50%, #ffd4e8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            text-align: center;
+            z-index: 1;
+        }
+
+        /* Floating hearts background */
+        .hearts-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .heart {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff69b4;
+            transform: rotate(-45deg);
+            opacity: 0.3;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .heart:before,
+        .heart:after {
+            content: "";
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff69b4;
+            border-radius: 50%;
+        }
+
+        .heart:before {
+            top: -15px;
+            left: 0;
+        }
+
+        .heart:after {
+            left: 15px;
+            top: 0;
+        }
+
+        .heart:nth-child(1) {
+            left: 10%;
+            top: 20%;
+            animation-delay: 0s;
+        }
+
+        .heart:nth-child(2) {
+            left: 70%;
+            top: 40%;
+            animation-delay: 2s;
+        }
+
+        .heart:nth-child(3) {
+            left: 30%;
+            top: 70%;
+            animation-delay: 4s;
+        }
+
+        .heart:nth-child(4) {
+            left: 85%;
+            top: 15%;
+            animation-delay: 6s;
+        }
+
+        .heart:nth-child(5) {
+            left: 50%;
+            top: 85%;
+            animation-delay: 8s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: rotate(-45deg) translateY(0px);
+            }
+
+            50% {
+                transform: rotate(-45deg) translateY(-30px);
+            }
+        }
+
+        /* Content styling */
+        .content {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 60px 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(255, 105, 180, 0.3);
+            max-width: 900px;
+            width: 90%;
+            margin: 20px;
+        }
+
+        .title {
+            font-size: 3em;
+            color: #ff1493;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0px);
+            }
+
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        .question {
+            font-size: 1.8em;
+            color: #ff69b4;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            margin-bottom: 30px;
+            min-height: 200px;
+            padding: 40px;
+            align-items: center;
+            position: relative;
+        }
+
+        .btn {
+            padding: 18px 50px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            color: white;
+            min-width: 190px;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255, 20, 147, 0.4);
+        }
+
+        .btn-yes:active {
+            transform: scale(1.05);
+        }
+
+        .btn-no {
+            background: linear-gradient(135deg, #ddd 0%, #bbb 100%);
+            color: #666;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+
+        .btn-no-placeholder {
+            background: linear-gradient(135deg, #ddd 0%, #bbb 100%);
+            color: #666;
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .disclaimer {
+            color: #ff69b4;
+            font-size: 0.9em;
+            font-style: italic;
+            margin-top: 20px;
+        }
+
+        /* Celebration */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 50%, #ffd4e8 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .celebration.hidden {
+            display: none;
+        }
+
+        .celebration-content {
+            text-align: center;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(255, 105, 180, 0.4);
+            animation: zoomIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 800px;
+            margin: 20px;
+        }
+
+        @keyframes zoomIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .celebration-text {
+            font-size: 3.5em;
+            color: #ff1493;
+            animation: pulse 1.5s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .celebration-subtitle {
+            font-size: 1.5em;
+            color: #ff69b4;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .celebration-hearts {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .celebration-heart {
+            font-size: 3em;
+            display: inline-block;
+            animation: floatHeart 2s ease-in-out infinite;
+        }
+
+        .celebration-heart:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .celebration-heart:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .celebration-heart:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .celebration-heart:nth-child(4) {
+            animation-delay: 0.6s;
+        }
+
+        .celebration-heart:nth-child(5) {
+            animation-delay: 0.8s;
+        }
+
+        .celebration-heart:nth-child(6) {
+            animation-delay: 1s;
+        }
+
+        @keyframes floatHeart {
+
+            0%,
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+
+            50% {
+                transform: translateY(-20px) scale(1.1);
+            }
+        }
+
+        .confetti-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .emoji-rain {
+            font-size: 3em;
+            margin-top: 30px;
+        }
+
+        .emoji-rain span {
+            display: inline-block;
+            animation: fall 3s infinite ease-in;
+            opacity: 0;
+            margin: 0 10px;
+        }
+
+        .emoji-rain span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .emoji-rain span:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .emoji-rain span:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        .emoji-rain span:nth-child(4) {
+            animation-delay: 0.9s;
+        }
+
+        .emoji-rain span:nth-child(5) {
+            animation-delay: 1.2s;
+        }
+
+        .emoji-rain span:nth-child(6) {
+            animation-delay: 1.5s;
+        }
+
+        .emoji-rain span:nth-child(7) {
+            animation-delay: 1.8s;
+        }
+
+        .emoji-rain span:nth-child(8) {
+            animation-delay: 2.1s;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 600px) {
+            .content {
+                padding: 40px 20px;
+                margin: 10px;
+                width: auto;
+            }
+
+            .title {
+                font-size: 2em;
+            }
+
+            .question {
+                font-size: 1.3em;
+            }
+
+            .buttons-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .btn {
+                padding: 15px 40px;
+                font-size: 1.1em;
+                width: 200px;
+            }
+
+            .btn-no {
+                position: relative;
+                pointer-events: none;
+            }
+
+            .celebration-content {
+                padding: 40px 30px;
+            }
+
+            .celebration-text {
+                font-size: 2em;
+                padding: 0;
+                text-align: center;
+            }
+
+            .celebration-subtitle {
+                font-size: 1.1em;
+            }
+
+            .celebration-heart {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
+
 <body>
     <div class="container">
         <div class="hearts-background">
@@ -15,22 +482,22 @@
             <div class="heart"></div>
             <div class="heart"></div>
         </div>
-        
+
         <div class="content">
             <h1 class="title">Hey Varsha! 💕</h1>
             <h2 class="question">Will you be my Valentine?</h2>
-            
+
             <div class="buttons-container">
                 <button id="yesButton" class="btn btn-yes">Yes! 💖</button>
                 <button id="noButton" class="btn btn-no">No</button>
                 <button id="noPlaceholder" class="btn btn-no-placeholder">No</button>
             </div>
-            
+
             <p class="disclaimer">
                 *The "No" button is a bit shy, like a nervous teddy bear 🧸
             </p>
         </div>
-        
+
         <div id="celebration" class="celebration hidden">
             <div class="celebration-content">
                 <h2 class="celebration-text">Yay! You made my day! 🎉💖</h2>
@@ -47,7 +514,213 @@
             <div class="confetti-container"></div>
         </div>
     </div>
-    
-    <script src="./script.js"></script>
+
+    <script>
+        // Get elements
+        const yesButton = document.getElementById('yesButton');
+        const noButton = document.getElementById('noButton');
+        const noPlaceholder = document.getElementById('noPlaceholder');
+        const celebration = document.getElementById('celebration');
+        const buttonsContainer = document.querySelector('.buttons-container');
+
+        // Track if we're on mobile/touch device
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Safe distance - button will move if cursor gets within this distance
+        const SAFE_DISTANCE = 180;
+
+        // Track if button has been activated
+        let isButtonAbsolute = false;
+
+        // CRITICAL: Ensure No button can NEVER be hovered by setting pointer-events to none from the start
+        noButton.style.pointerEvents = 'none';
+
+        // For desktop: smooth predictive movement
+        function moveButtonAway(event) {
+            if (isTouchDevice) return;
+
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+
+            const buttonRect = noButton.getBoundingClientRect();
+            const containerRect = buttonsContainer.getBoundingClientRect();
+
+            // Calculate button center
+            const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+            const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+
+            // Calculate distance from mouse to button center
+            const distanceX = buttonCenterX - mouseX;
+            const distanceY = buttonCenterY - mouseY;
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+            // If cursor is within safe distance
+            if (distance < SAFE_DISTANCE) {
+                // First time activation - switch to absolute positioning
+                if (!isButtonAbsolute) {
+                    isButtonAbsolute = true;
+
+                    // Get current position before switching to absolute
+                    const currentLeft = buttonRect.left - containerRect.left;
+                    const currentTop = buttonRect.top - containerRect.top;
+
+                    // Show placeholder to maintain layout
+                    noPlaceholder.style.visibility = 'visible';
+                    noPlaceholder.style.opacity = '0';
+                    noPlaceholder.style.position = 'relative';
+
+                    // Switch to absolute positioning
+                    noButton.style.position = 'absolute';
+                    noButton.style.left = currentLeft + 'px';
+                    noButton.style.top = currentTop + 'px';
+                    noButton.style.transform = 'none';
+                    noButton.style.pointerEvents = 'none';
+                }
+
+                // Calculate angle from mouse to button (direction to escape)
+                const angle = Math.atan2(distanceY, distanceX);
+
+                // Calculate how far to move (further away when cursor is closer)
+                const moveDistance = SAFE_DISTANCE * 1.5;
+
+                // Calculate new position
+                let newCenterX = mouseX + Math.cos(angle) * moveDistance;
+                let newCenterY = mouseY + Math.sin(angle) * moveDistance;
+
+                // Convert to top-left position
+                let newLeft = newCenterX - buttonRect.width / 2 - containerRect.left;
+                let newTop = newCenterY - buttonRect.height / 2 - containerRect.top;
+
+                // Ensure button stays within container bounds
+                const padding = 10;
+                const maxLeft = containerRect.width - buttonRect.width - padding;
+                const maxTop = containerRect.height - buttonRect.height - padding;
+
+                newLeft = Math.max(padding, Math.min(maxLeft, newLeft));
+                newTop = Math.max(padding, Math.min(maxTop, newTop));
+
+                // Apply new position
+                noButton.style.left = newLeft + 'px';
+                noButton.style.top = newTop + 'px';
+            }
+        }
+
+        // For mobile: move button on touch/click attempt
+        function moveButtonAwayMobile(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const containerRect = buttonsContainer.getBoundingClientRect();
+            const buttonRect = noButton.getBoundingClientRect();
+
+            // First time - switch to absolute
+            if (!isButtonAbsolute) {
+                isButtonAbsolute = true;
+                const currentLeft = buttonRect.left - containerRect.left;
+                const currentTop = buttonRect.top - containerRect.top;
+
+                // Show placeholder
+                noPlaceholder.style.visibility = 'visible';
+                noPlaceholder.style.opacity = '0';
+
+                noButton.style.position = 'absolute';
+                noButton.style.left = currentLeft + 'px';
+                noButton.style.top = currentTop + 'px';
+                noButton.style.transform = 'none';
+                noButton.style.pointerEvents = 'none';
+            }
+
+            // Generate random position within container
+            const padding = 10;
+            const maxLeft = containerRect.width - buttonRect.width - padding;
+            const maxTop = containerRect.height - buttonRect.height - padding;
+
+            const newLeft = padding + Math.random() * (maxLeft - padding);
+            const newTop = padding + Math.random() * (maxTop - padding);
+
+            noButton.style.left = newLeft + 'px';
+            noButton.style.top = newTop + 'px';
+        }
+
+        // Set up event listeners based on device type
+        if (isTouchDevice) {
+            // Mobile: enable touch events temporarily for detection
+            noButton.style.pointerEvents = 'auto';
+            noButton.addEventListener('touchstart', moveButtonAwayMobile);
+            noButton.addEventListener('click', moveButtonAwayMobile);
+        } else {
+            // Desktop: continuous tracking, pointer-events already none
+            document.addEventListener('mousemove', moveButtonAway);
+        }
+
+        // Yes button functionality
+        yesButton.addEventListener('click', () => {
+            celebration.classList.remove('hidden');
+            createEnhancedConfetti();
+        });
+
+        // Create enhanced confetti effect with emojis and shapes
+        function createEnhancedConfetti() {
+            const confettiContainer = document.querySelector('.confetti-container');
+            const colors = ['#ff1493', '#ff69b4', '#ffb6c1', '#ffc0cb', '#ff69b4', '#ffd700'];
+            const shapes = ['💖', '💕', '💗', '💝', '💘', '💞', '⭐', '✨'];
+
+            // Create more confetti pieces for a spectacular effect
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const isEmoji = Math.random() > 0.5;
+                    const confetti = document.createElement('div');
+
+                    if (isEmoji) {
+                        // Emoji confetti
+                        confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                        confetti.style.fontSize = (15 + Math.random() * 20) + 'px';
+                    } else {
+                        // Regular confetti pieces
+                        confetti.style.width = (8 + Math.random() * 8) + 'px';
+                        confetti.style.height = (8 + Math.random() * 8) + 'px';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    }
+
+                    confetti.style.position = 'absolute';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-20px';
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.zIndex = '9999';
+                    confetti.style.opacity = '0.8';
+
+                    confettiContainer.appendChild(confetti);
+
+                    const fallDuration = 2000 + Math.random() * 3000;
+                    const drift = (Math.random() - 0.5) * 200;
+                    const startTime = Date.now();
+                    const rotation = Math.random() * 360;
+                    const rotationSpeed = (Math.random() - 0.5) * 720;
+
+                    function animateConfetti() {
+                        const elapsed = Date.now() - startTime;
+                        const progress = elapsed / fallDuration;
+
+                        if (progress < 1) {
+                            const currentTop = progress * (window.innerHeight + 50);
+                            const currentDrift = Math.sin(progress * Math.PI * 2) * drift;
+                            const currentRotation = rotation + (rotationSpeed * progress);
+
+                            confetti.style.top = currentTop + 'px';
+                            confetti.style.transform = `translateX(${currentDrift}px) rotate(${currentRotation}deg)`;
+                            confetti.style.opacity = (1 - progress) * 0.8;
+                            requestAnimationFrame(animateConfetti);
+                        } else {
+                            confetti.remove();
+                        }
+                    }
+
+                    animateConfetti();
+                }, i * 20);
+            }
+        }
+    </script>
 </body>
+
 </html>
