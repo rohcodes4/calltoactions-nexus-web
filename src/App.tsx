@@ -23,6 +23,7 @@ import { useEffect } from "react";
 import SharedInvoice from './pages/SharedInvoice';
 import SharedProposal from './pages/SharedProposal';
 import NewsletterPopup from './components/NewsletterPopup';
+import OnsetHomes from "./pages/OnsetHomes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,11 +56,25 @@ const AnimatedRoutes = () => {
         <Route path="/admin/*" element={<PageTransition><Admin /></PageTransition>} />
         <Route path="/invoices/shared/:token" element={<SharedInvoice />} />
         <Route path="/proposals/shared/:token" element={<SharedProposal />} />
+        <Route path="/onsethomes" element={<PageTransition><OnsetHomes /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );
 };
+ // Full app shell — includes Navbar, Footer, CustomCursor, Preloader
+const MainApp = () => (
+  <>
+    <Preloader />
+    <CustomCursor />
+    <Navbar />
+    <main className="min-h-screen">
+      <AnimatedRoutes />
+      <NewsletterPopup />
+    </main>
+    <Footer />
+  </>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -67,17 +82,33 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Preloader />
-        <CustomCursor />
-        <Navbar />
-        <main className="min-h-screen">
-          <AnimatedRoutes />
-          <NewsletterPopup />
-        </main>
-        <Footer />
+        <Routes>
+          {/* Standalone — no Navbar, Footer, or CustomCursor */}
+          <Route path="/onsethomes" element={<OnsetHomes />} />
+          {/* Everything else gets the full shell */}
+          <Route path="*" element={<MainApp />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
+// const App = () => (
+//   <QueryClientProvider client={queryClient}>
+//     <TooltipProvider>
+//       <Toaster />
+//       <Sonner />
+//       <BrowserRouter>
+//         <Preloader />
+//         <CustomCursor />
+//         <Navbar />
+//         <main className="min-h-screen">
+//           <AnimatedRoutes />
+//           <NewsletterPopup />
+//         </main>
+//         <Footer />
+//       </BrowserRouter>
+//     </TooltipProvider>
+//   </QueryClientProvider>
+// );
 
 export default App;
