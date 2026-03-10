@@ -1099,6 +1099,11 @@ function Footer() {
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
+    useEffect(() => {
+        const prev = document.title;
+        document.title = "Onset Homes × Rohcodes – Ecommerce Relaunch Proposal";
+        return () => { document.title = prev; };
+      }, []);
   return (
     <div>
       <Nav />
